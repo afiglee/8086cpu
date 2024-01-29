@@ -46,7 +46,6 @@ TEST(OpCodeTwo, test_register)
     inp += (uint8_t) 0x49;
     
     pOpCode ret = opCode.get(inp, offset);
-    std::cout << "mnemonic='" << ret->mnemonic() << "'" << std::endl; 
     EXPECT_TRUE(offset == 2);
     EXPECT_TRUE(ret->mnemonic() == string("add al, 0x49"));
     

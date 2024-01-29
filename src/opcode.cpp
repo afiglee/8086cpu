@@ -100,6 +100,13 @@ pOpCode OpCode::get(const bin_string& inp, size_t& offset) {
     return _get(inp, offset);
 }
 
+std::ostream& operator<<(std::ostream& os, const OpCode oCode)
+{
+    os << "m_head=" << oCode.m_head
+       << " m_mnemonic=" << oCode.m_mnemonic;
+    return os;
+}
+
 pOpCode OpCode::_get(const bin_string& inp, size_t& offset) {
     if (inp.size() < offset) {
         stringstream ss;

@@ -63,12 +63,10 @@ class OpCode {
         pOpCode get(const bin_string& inp, size_t& offset);
 
         const string& mnemonic() const;
-
+        friend std::ostream& operator<<(std::ostream& os, const OpCode oCode);
     protected:
         virtual pOpCode _get(const bin_string& inp, size_t& offset);
 
-    set<FLAG> m_affected_flags;
-    //enum FLAVOUR m_flavour;
     string_view m_head;
     string m_mnemonic;
     bin_string m_operands;
@@ -79,7 +77,7 @@ class OpCodeTwo : public OpCode {
         OpCodeTwo(const char *head, uint8_t code);
 
     protected:
-        virtual pOpCode _get(const bin_string& inp, size_t& offset); 
+        virtual pOpCode _get(const bin_string& inp, size_t& offset) override; 
         virtual void readOperand();  
 };
 
@@ -88,7 +86,7 @@ class OpCodeRelJump: public OpCodeTwo {
         OpCodeRelJump(const char *head, uint8_t code);
 
     protected:
-        virtual void readOperand();  
+        virtual void readOperand() override;  
 };
 
 class OpCodeThree : public OpCode {
@@ -96,7 +94,7 @@ class OpCodeThree : public OpCode {
         OpCodeThree(const char *head, uint8_t code);
 
     protected:
-        virtual pOpCode _get(const bin_string& inp, size_t& offset);   
+        virtual pOpCode _get(const bin_string& inp, size_t& offset) override;   
 };
 
 class AriphmeticOpCode: public OpCode {

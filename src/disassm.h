@@ -3,16 +3,16 @@
 
 #include "opcode.h"
 
+using std::shared_ptr;
+
 class Disassm {
 
 public:
     Disassm(enum FLAVOUR flavour = x8086_88);
-    /* If offset is not nullptr offset will point to start instruction
-    */
-    virtual pOpCode decode(const bin_string& inp, size_t* offset = nullptr);    
+    virtual pOpCode decode(const bin_string& inp, size_t& offset);    
 protected:
     enum FLAVOUR m_flavour;
-    array<OpCode, 1> m_opcodes;
+    array<shared_ptr<OpCode>, 6> m_opcodes;
 
 };
 
