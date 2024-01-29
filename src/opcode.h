@@ -85,13 +85,6 @@ class OpCode1 : public OpCode
         virtual pOpCode get(const bin_string& inp, size_t& offset) override;
 };
 
-class OpCode1 : public OpCode 
-{
-    public:
-        OpCode1(const char* head, uint8_t code);
-        virtual pOpCode get(const bin_string& inp, size_t& offset) override;
-};
-
 class OpCode2 : public OpCode 
 {
     public:

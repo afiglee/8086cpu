@@ -70,10 +70,9 @@ static void to_reg16(string& mnemonic, uint8_t code)
 }
 
 OpCode::OpCode(const char *head, uint8_t code):
-m_head{head},
-m_operands{code} 
+m_head(head)
 {
-    
+    m_operands += code;
 }
 
 pOpCode OpCode::get(const bin_string& inp, size_t& offset) {
@@ -109,7 +108,7 @@ pOpCode OpCode0::get(const bin_string& inp, size_t& offset) {
             throw range_error(ss.str());
         }
         m_operands += inp[offset];
-        if (inp[offset] & 0xC0 != 0x40) {
+        if ((inp[offset] & 0xC0) != 0x40) {
             break;
         }
         --count;
@@ -166,7 +165,7 @@ pOpCode OpCode0::get(const bin_string& inp, size_t& offset) {
                 m_mnemonic.append(" [bx");
                 break;
         }
-        if (m_operands[1] & 0xC0 == 0x40) {
+        if ((m_operands[1] & 0xC0) == 0x40) {
             stringstream ss;
             ss << " + 0x" << std::hex << m_operands[2];
             m_mnemonic.append(ss.str());
@@ -188,7 +187,7 @@ pOpCode OpCode1::get(const bin_string& inp, size_t& offset) {
             throw range_error(ss.str());
         }
         m_operands += inp[offset];
-        if (inp[offset] & 0xC0 != 0x40) {
+        if ((inp[offset] & 0xC0) != 0x40) {
             break;
         }
         --count;
@@ -245,7 +244,7 @@ pOpCode OpCode1::get(const bin_string& inp, size_t& offset) {
                 m_mnemonic.append(" [bx");
                 break;
         }
-        if (m_operands[1] & 0xC0 == 0x40) {
+        if ((m_operands[1] & 0xC0) == 0x40) {
             stringstream ss;
             ss << " + 0x" << std::hex << m_operands[2];
             m_mnemonic.append(ss.str());
@@ -267,7 +266,7 @@ pOpCode OpCode2::get(const bin_string& inp, size_t& offset) {
             throw range_error(ss.str());
         }
         m_operands += inp[offset];
-        if (inp[offset] & 0xC0 != 0x40) {
+        if ((inp[offset] & 0xC0) != 0x40) {
             break;
         }
         --count;
@@ -319,7 +318,7 @@ pOpCode OpCode2::get(const bin_string& inp, size_t& offset) {
                 m_mnemonic.append(" [bx");
                 break;
         }
-        if (m_operands[1] & 0xC0 == 0x40) {
+        if ((m_operands[1] & 0xC0) == 0x40) {
             stringstream ss;
             ss << " + 0x" << std::hex << m_operands[2];
             m_mnemonic.append(ss.str());
