@@ -1,11 +1,11 @@
-#include "opcode.h"
+#include "disassm.h"
 #include <stdexcept>
 #include <memory>
 #include <sstream>
 
 using std::range_error;
-using std::runtime_error;
-using std::make_shared;
+//using std::runtime_error;
+//using std::make_shared;
 using std::stringstream;
 
 

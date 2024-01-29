@@ -60,9 +60,12 @@ class OpCode {
 
         //Creates opcode and returns shared pointer to it
         //May through exception
-        virtual pOpCode get(const bin_string& inp, size_t& offset);
+        pOpCode get(const bin_string& inp, size_t& offset);
+
+        const string& mnemonic() const;
 
     protected:
+        virtual pOpCode _get(const bin_string& inp, size_t& offset);
 
     set<FLAG> m_affected_flags;
     //enum FLAVOUR m_flavour;
@@ -71,38 +74,37 @@ class OpCode {
     bin_string m_operands;
 };
 
-class OpCode0 : public OpCode 
+class AriphmeticOpCode: public OpCode {
+    public:
+        AriphmeticOpCode(const char* head, uint8_t code);
+
+    protected:
+        void readOperands(const bin_string& inp, size_t& offset);
+};
+
+class OpCode0 : public AriphmeticOpCode 
 {
     public:
         OpCode0(const char* head, uint8_t code);
-        virtual pOpCode get(const bin_string& inp, size_t& offset) override;
+    protected:
+        virtual pOpCode _get(const bin_string& inp, size_t& offset) override;
 };
 
-class OpCode1 : public OpCode 
+class OpCode1 : public AriphmeticOpCode 
 {
     public:
         OpCode1(const char* head, uint8_t code);
-        virtual pOpCode get(const bin_string& inp, size_t& offset) override;
+    protected:
+        virtual pOpCode _get(const bin_string& inp, size_t& offset) override;
+
 };
 
-class OpCode2 : public OpCode 
+class OpCode2 : public AriphmeticOpCode 
 {
     public:
         OpCode2(const char* head, uint8_t code);
-        virtual pOpCode get(const bin_string& inp, size_t& offset) override;
-};
-
-
-class Disassm {
-
-public:
-    Disassm(enum FLAVOUR flavour = x8086_88);
-    /* If offset is not nullptr offset will point to start instruction
-    */
-    virtual pOpCode decode(const bin_string& inp, size_t* offset = nullptr);    
-protected:
-    enum FLAVOUR m_flavour;
-    array<OpCode, 1> m_opcodes;
+    protected:
+        virtual pOpCode _get(const bin_string& inp, size_t& offset) override;
 
 };
 

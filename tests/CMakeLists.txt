@@ -1,10 +1,12 @@
 add_executable(disassm.t
-               opcode_test.cpp
+               opcode0_test.cpp
+               opcode1_test.cpp
+               opcode2_test.cpp
                test_main.cpp)
 target_compile_features(disassm.t PRIVATE cxx_std_17)               
-target_include_directories(disassm.t PRIVATE . /opt/homebrew/include/)
+target_include_directories(disassm.t PRIVATE . ../src/ /opt/homebrew/include/)
 
-target_link_libraries(disassm.t gtest)
+target_link_libraries(disassm.t disassm gtest)
 target_link_directories(disassm.t PRIVATE /opt/homebrew/lib/)
 
 add_test(NAME disassm.t 
