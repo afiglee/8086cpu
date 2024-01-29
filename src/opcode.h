@@ -74,6 +74,31 @@ class OpCode {
     bin_string m_operands;
 };
 
+class OpCodeTwo : public OpCode {
+    public:
+        OpCodeTwo(const char *head, uint8_t code);
+
+    protected:
+        virtual pOpCode _get(const bin_string& inp, size_t& offset); 
+        virtual void readOperand();  
+};
+
+class OpCodeRelJump: public OpCodeTwo {
+    public:
+        OpCodeRelJump(const char *head, uint8_t code);
+
+    protected:
+        virtual void readOperand();  
+};
+
+class OpCodeThree : public OpCode {
+    public:
+        OpCodeThree(const char *head, uint8_t code);
+
+    protected:
+        virtual pOpCode _get(const bin_string& inp, size_t& offset);   
+};
+
 class AriphmeticOpCode: public OpCode {
     public:
         AriphmeticOpCode(const char* head, uint8_t code);
@@ -103,6 +128,15 @@ class OpCode2 : public AriphmeticOpCode
 {
     public:
         OpCode2(const char* head, uint8_t code);
+    protected:
+        virtual pOpCode _get(const bin_string& inp, size_t& offset) override;
+
+};
+
+class OpCode3 : public AriphmeticOpCode 
+{
+    public:
+        OpCode3(const char* head, uint8_t code);
     protected:
         virtual pOpCode _get(const bin_string& inp, size_t& offset) override;
 

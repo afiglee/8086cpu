@@ -76,6 +76,24 @@ m_head(head)
     m_operands += code;
 }
 
+OpCodeTwo::OpCodeTwo(const char *head, uint8_t code):
+OpCode(head, code)
+{
+    
+}
+
+OpCodeRelJump::OpCodeRelJump(const char *head, uint8_t code):
+OpCodeTwo(head, code)
+{
+    
+}
+
+OpCodeThree::OpCodeThree(const char *head, uint8_t code):
+OpCode(head, code)
+{
+    
+}
+
 pOpCode OpCode::get(const bin_string& inp, size_t& offset) {
     m_operands.erase(1); // clear previous operands if any    
     offset++; //move pointer to the first operand
@@ -83,12 +101,65 @@ pOpCode OpCode::get(const bin_string& inp, size_t& offset) {
 }
 
 pOpCode OpCode::_get(const bin_string& inp, size_t& offset) {
+    if (inp.size() < offset) {
+        stringstream ss;
+        ss << m_head << " abruptly interrupted at " << offset;
+        throw range_error(ss.str());
+    }
+    m_mnemonic = m_head;
     return make_shared<OpCode>(*this);
 }
 
 const string& OpCode::mnemonic() const{
     return m_mnemonic;
 }
+
+pOpCode OpCodeTwo::_get(const bin_string& inp, size_t& offset) 
+{
+    m_mnemonic = m_head;
+    if (inp.size() <= offset) {
+        stringstream ss;
+        ss << m_head << " abruptly interrupted at " << offset;
+        throw range_error(ss.str());
+    }   
+    m_operands += inp[offset++];
+    readOperand();
+    return make_shared<OpCode>(*this);
+}
+
+void OpCodeTwo::readOperand()
+{
+    stringstream sdata;
+    sdata << ", 0x" << std::hex << (int) m_operands[1]; 
+    m_mnemonic.append(sdata.str());
+}
+
+void OpCodeRelJump::readOperand()
+{
+    stringstream sdata;
+    int data = (int8_t) m_operands[1];
+    sdata << " " << (int) data; 
+    m_mnemonic.append(sdata.str());
+}
+
+pOpCode OpCodeThree::_get(const bin_string& inp, size_t& offset) 
+{
+    m_mnemonic = m_head;
+    if (inp.size() <= (offset + 1)) {
+            stringstream ss;
+            ss << m_head << " abruptly interrupted at " << offset;
+            throw range_error(ss.str());
+    }   
+    stringstream sdata;
+    uint16_t data = inp[offset++];
+    m_operands += data;
+    data += ((uint16_t) (inp[offset])) << 8;
+    m_operands += inp[offset++];
+    sdata << ", 0x" << std::hex << (int) data;
+    m_mnemonic.append(sdata.str()); 
+    return make_shared<OpCode>(*this);
+}
+
 
 AriphmeticOpCode::AriphmeticOpCode(const char* head, uint8_t code):
 OpCode(head, code)
@@ -137,6 +208,12 @@ AriphmeticOpCode(head, code)
 }
 
 OpCode2::OpCode2(const char* head, uint8_t code):
+AriphmeticOpCode(head, code)
+{
+
+}
+
+OpCode3::OpCode3(const char* head, uint8_t code):
 AriphmeticOpCode(head, code)
 {
 
@@ -319,3 +396,57 @@ pOpCode OpCode2::_get(const bin_string& inp, size_t& offset) {
     return make_shared<OpCode>(*this);
 }
 
+pOpCode OpCode3::_get(const bin_string& inp, size_t& offset) {
+    readOperands(inp, offset);
+    uint8_t code = m_operands[1];
+    size_t count = 2;
+    m_mnemonic.append(" ");
+    
+    if (code >= 0xC0) {
+        to_reg16(m_mnemonic, (code >> 3) & 0x07);
+        m_mnemonic.append(", ");
+        to_reg16(m_mnemonic, code);
+    } else /* < 0x80 */{
+        to_reg16(m_mnemonic, (code >> 3) & 0x07);
+        m_mnemonic.append(", word ptr");
+        switch (m_operands[1] & 0x07) {
+            case 0:
+                m_mnemonic.append(" [bx + si");
+                break;
+            case 1:
+                m_mnemonic.append(" [bx + di");
+                break;
+            case 2:
+                m_mnemonic.append(" [bp + si");
+                break;
+            case 3:
+                m_mnemonic.append(" [bp + di");
+                break;
+            case 4:
+                m_mnemonic.append(" [si");
+                break;
+            case 5:
+                m_mnemonic.append(" [di");
+                break;
+            case 6:
+                {
+                    stringstream ss;
+                    ss << m_head << " has n/a operand 0x" << std::hex << (int) m_operands[1] << " at " << offset;
+                    throw runtime_error(ss.str());
+
+                }
+                break;
+            case 7:
+                m_mnemonic.append(" [bx");
+                break;
+        }
+        if ((m_operands[1] & 0xC0) == 0x40) {
+            stringstream ss;
+            ss << " + 0x" << std::hex << (int) m_operands[2];
+            m_mnemonic.append(ss.str());
+        }
+        m_mnemonic.append("]");
+        
+    }
+    return make_shared<OpCode>(*this);
+}

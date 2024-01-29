@@ -16,7 +16,7 @@ using std::stringstream;
 Disassm::Disassm(enum FLAVOUR flavour) :
 m_flavour(flavour),
 m_opcodes{
-    OpCode0("add", 0)
+    OpCode0{"add", 0}
 }
 {
 }
