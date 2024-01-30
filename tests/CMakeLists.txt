@@ -12,6 +12,8 @@ target_compile_features(disassm.t PRIVATE cxx_std_17)
 message(NOTICE "CMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}")
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")             
     target_include_directories(disassm.t PRIVATE . ../src/ /opt/homebrew/include/)
+else()
+    target_include_directories(disassm.t PRIVATE . ../src/)
 endif()
 
 target_link_libraries(disassm.t disassm gtest)

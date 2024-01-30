@@ -5,6 +5,8 @@
 #include <string>
 #include <array>
 #include <string_view>
+#include <memory>
+
 
 using std::set;
 using std::string;
