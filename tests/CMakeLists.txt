@@ -8,8 +8,11 @@ add_executable(disassm.t
                opcodeSingle_test.cpp
                disassm_test.cpp
                test_main.cpp)
-target_compile_features(disassm.t PRIVATE cxx_std_17)               
-target_include_directories(disassm.t PRIVATE . ../src/ /opt/homebrew/include/)
+target_compile_features(disassm.t PRIVATE cxx_std_17)  
+message(NOTICE "CMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}")
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")             
+    target_include_directories(disassm.t PRIVATE . ../src/ /opt/homebrew/include/)
+endif()
 
 target_link_libraries(disassm.t disassm gtest)
 target_link_directories(disassm.t PRIVATE /opt/homebrew/lib/)
