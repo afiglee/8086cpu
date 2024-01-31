@@ -12,7 +12,7 @@ public:
     virtual pOpCode decode(const bin_string& inp, size_t& offset);    
 protected:
     enum FLAVOUR m_flavour;
-    array<shared_ptr<OpCode>, 192> m_opcodes;
+    array<shared_ptr<OpCode>, 256> m_opcodes;
 
 };
 
