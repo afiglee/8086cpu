@@ -27,4 +27,4 @@ target_link_libraries(disassm.t disassm gtest)
 target_link_directories(disassm.t PRIVATE ${GOOGLETEST_PREFIX}/lib/)
 
 add_test(NAME disassm.t 
-         COMMAND $<TARGET_FILE:disassm.t> --gtest-output=xml:disassm.t.xunit.xml)
+         COMMAND disassm.t)

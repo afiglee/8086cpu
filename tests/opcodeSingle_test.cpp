@@ -33,3 +33,17 @@ TEST(OpCodeSingle, test_instruction)
     EXPECT_TRUE(ret->mnemonic() == string("push es"));
     
 }
+
+TEST(OpCodeSingle, test_na)
+{
+    OpCodeNA opCode(0xF1);
+
+    size_t offset = 0;
+    bin_string inp;
+    inp += (uint8_t) 0xF1;
+    
+    pOpCode ret = opCode.get(inp, offset);
+    EXPECT_TRUE(offset == 1);
+    EXPECT_TRUE(ret->mnemonic() == string("n/a"));
+    
+}

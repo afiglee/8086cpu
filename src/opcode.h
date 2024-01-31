@@ -74,6 +74,12 @@ class OpCode {
     bin_string m_operands;
 };
 
+class OpCodeNA : public OpCode {
+    public:    
+        OpCodeNA(uint8_t code);
+
+};
+
 class OpCodeTwo : public OpCode {
     public:
         OpCodeTwo(const char *head, uint8_t code);
