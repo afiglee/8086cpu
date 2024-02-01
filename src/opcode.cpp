@@ -3,7 +3,7 @@
 #include <sstream>
 #include <memory>
 #include <iostream>
-
+#include  <iomanip>
 
 using std::runtime_error;
 using std::range_error;
@@ -76,6 +76,11 @@ m_head(head)
     m_operands += code;
 }
 
+OpCodeNA::OpCodeNA(uint8_t code):
+OpCode("n/a", code)
+{
+}
+
 OpCodeTwo::OpCodeTwo(const char *head, uint8_t code):
 OpCode(head, code)
 {
@@ -130,22 +135,23 @@ pOpCode OpCodeTwo::_get(const bin_string& inp, size_t& offset)
         throw range_error(ss.str());
     }   
     m_operands += inp[offset++];
-    readOperand();
+    readOperand(offset);
     return make_shared<OpCode>(*this);
 }
 
-void OpCodeTwo::readOperand()
+void OpCodeTwo::readOperand([[maybe_unused]] size_t offset)
 {
     stringstream sdata;
     sdata << ", 0x" << std::hex << (int) m_operands[1]; 
     m_mnemonic.append(sdata.str());
 }
 
-void OpCodeRelJump::readOperand()
+void OpCodeRelJump::readOperand([[maybe_unused]] size_t offset)
 {
     stringstream sdata;
     int data = (int8_t) m_operands[1];
-    sdata << " " << (int) data; 
+    offset += data;
+    sdata << " 0x" << std::setfill('0') << std::setw(6) << std::hex << (int) offset; 
     m_mnemonic.append(sdata.str());
 }
 

@@ -86,7 +86,7 @@ class OpCodeTwo : public OpCode {
 
     protected:
         virtual pOpCode _get(const bin_string& inp, size_t& offset) override; 
-        virtual void readOperand();  
+        virtual void readOperand([[maybe_unused]] size_t offset);  
 };
 
 class OpCodeRelJump: public OpCodeTwo {
@@ -94,7 +94,7 @@ class OpCodeRelJump: public OpCodeTwo {
         OpCodeRelJump(const char *head, uint8_t code);
 
     protected:
-        virtual void readOperand() override;  
+        virtual void readOperand([[maybe_unused]] size_t offset) override;  
 };
 
 class OpCodeThree : public OpCode {
