@@ -61,7 +61,6 @@ TEST(OpCodeJmpRel, test_reljump)
     inp += (uint8_t) 0xFF;
     
     pOpCode ret = opCode.get(inp, offset);
-    std::cout << "'" << ret->mnemonic() << "'" << std::endl;
     EXPECT_TRUE(offset == 2);
     EXPECT_TRUE(ret->mnemonic() == string("jne 0x000001"));
     

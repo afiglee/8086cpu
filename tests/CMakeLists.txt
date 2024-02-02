@@ -6,7 +6,8 @@ add_executable(disassm.t
                opcodeTwo_test.cpp
                opcodeThree_test.cpp
                opcodeSingle_test.cpp
-               #disassm_test.cpp
+               opcodeMulti_test.cpp
+               disassm_test.cpp
                test_main.cpp)
 target_compile_features(disassm.t PRIVATE cxx_std_17)  
 message(NOTICE "CMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}")

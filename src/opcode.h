@@ -148,4 +148,11 @@ class OpCode3 : public AriphmeticOpCode
 
 };
 
+class OpCodeMulti :public OpCode {
+    public:
+        OpCodeMulti(uint8_t code);
+    protected:
+        virtual pOpCode _get(const bin_string& inp, size_t& offset) override;
+};
+
 #endif

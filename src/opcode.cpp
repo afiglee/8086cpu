@@ -232,6 +232,11 @@ AriphmeticOpCode(head, code)
 
 }
 
+OpCodeMulti::OpCodeMulti(uint8_t code):
+OpCode("", code) 
+{
+}
+
 pOpCode OpCode0::_get(const bin_string& inp, size_t& offset) {
     readOperands(inp, offset);
     uint8_t code = m_operands[1];
@@ -462,4 +467,9 @@ pOpCode OpCode3::_get(const bin_string& inp, size_t& offset) {
         
     }
     return make_shared<OpCode>(*this);
+}
+
+pOpCode OpCodeMulti::_get(const bin_string& inp, size_t& offset)
+{
+    return OpCode::_get(inp, offset);
 }
