@@ -81,10 +81,10 @@ OpCode("n/a", code)
 {
 }
 
-OpCodeTwo::OpCodeTwo(const char *head, uint8_t code):
+OpCodeTwo::OpCodeTwo(const char *head, uint8_t code, uint8_t code2):
 OpCode(head, code)
 {
-    
+    m_operands += code2;
 }
 
 OpCodeRelJump::OpCodeRelJump(const char *head, uint8_t code):

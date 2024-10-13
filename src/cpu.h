@@ -1,6 +1,10 @@
 #ifndef __CPU_H__
 #define __CPU_H__
 
+#include <cstdint>
+#include "basetypes.h"
+
+namespace afiglee {
 class Reg final {
 public:
 
@@ -11,14 +15,17 @@ protected:
 
 class CPU {
 public:
-    CPU();
-    virtual ~CPU();
+    CPU() = default;
+    virtual ~CPU() = default;
 
+    // returns number of cycles operation took
+    virtual size_t process(const ROM& rom){ return 0;}
 };
 
-class CPU_8086 /*same as 8088*/{
+class CPU_8086: public CPU 
+{ 
 public: 
-        CPU_8086();
+        CPU_8086() = default;
 
         void reset();
 protected:
@@ -37,6 +44,8 @@ protected:
     Reg CS;
     Reg SS;
     Reg DS;
+};
+
 }
 
 #endif
