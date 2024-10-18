@@ -529,6 +529,19 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
         case CLD:     //0xFC
         case STD:     //0xFD
             return shared_ptr<OpCode>(new OpCode{bstring{code}});
+        case 0xFE:
+        {
+            if (offset >= inp.size()) {
+                throw out_of_range("at " + to_string(offset - 1));
+            }
+            const uint8_t &code2 = inp[offset];
+            if ((code2 & 0x38) == 0x00 ||
+                (code2 & 0x38) == 0x08) {
+                return modregrm(code, inp, offset);
+            } else {
+                THROW_INVALID(offset - 1, code, code2);
+            }
+        }    
         case 0xFF: 
         {
             if (offset >= inp.size()) {
@@ -560,22 +573,22 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
         break;
         case 0xCD:      //int x
         case 0xEB:      //jmp
-        case 0x74:      //JE/JZ
-        case 0x7C:      //JL/JNGE
-        case 0x7E:      //JLE/JNG
-        case 0x72:      //JB/JNAE
-        case 0x76:      //JBE/JNA
-        case 0x7A:      //JP/JPE
         case 0x70:      //JO
-        case 0x78:      //JS
-        case 0x75:      //JNE/JNZ
-        case 0x7D:      //JNL/JGE
-        case 0x7F:      //JNLE/JG
-        case 0x73:      //JNB/JA
-        case 0x77:      //JNBE/JA
-        case 0x7B:      //JNP/JPO
         case 0x71:      //JNO
+        case 0x72:      //JB/JNAE
+        case 0x73:      //JNB/JA
+        case 0x74:      //JE/JZ
+        case 0x75:      //JNE/JNZ
+        case 0x76:      //JBE/JNA
+        case 0x77:      //JNBE/JA
+        case 0x78:      //JS
         case 0x79:      //JNS
+        case 0x7A:      //JP/JPE
+        case 0x7B:      //JNP/JPO
+        case 0x7C:      //JL/JNGE
+        case 0x7D:      //JNL/JGE
+        case 0x7E:      //JLE/JNG
+        case 0x7F:      //JNLE/JG
         //or (code & 0xF0 == 0x70)
         {
             if (offset >= inp.size()) {
@@ -615,24 +628,18 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
         case AND_DW_MASK: //0x20
         case OR_DW_MASK:  //0x08
         case XOR_DW_MASK: //0x30
-
-        case 0xF6:
         {
             if (offset >= inp.size()) {
                 throw out_of_range("at " + to_string(offset - 1));
             }
             const uint8_t &code2 = inp[offset];
-            if (code == 0xF6 && code2 == 0x01) {
+            if (code == 0xF6 && ((code2 & 0x38) == 0x08)) {
                 THROW_INVALID(offset - 1, code, code2);
                 //return shared_ptr<OpCode>(new OpCodeNA(bstring{code, code2}));
             }
-        }
-            // no break, fell through
-
-        case 0x80: //Group
-        
             std::cout << "HERE" << std::hex << (int) code << std::endl;
             return modregrm(code, inp, offset);
+        }
         case 0xE0:
             {
                 if (offset >= inp.size()) {
@@ -671,6 +678,49 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
                 return shared_ptr<OpCode>(new OpCode{bstring{code, code2}});
             }            
         }
+        case 0x80:
+        {
+            if (offset >= inp.size()) {
+                throw out_of_range("at " + to_string(offset - 1));
+            }
+            const uint8_t &code2 = inp[offset];
+            if ((code2 & 0x38) == 0x20) {
+                THROW_INVALID(offset - 1, code, code2);
+            }
+            return modregrm(code, inp, offset); 
+        }
+        break;
+        case 0x82:
+        {
+            if (offset >= inp.size()) {
+                throw out_of_range("at " + to_string(offset - 1));
+            }
+            const uint8_t &code2 = inp[offset];
+            uint8_t subcode = code2 & 0x38;
+            switch (subcode) {
+                case 0x08:
+                case 0x20:
+                case 0x30:
+                    THROW_INVALID(offset - 1, code, code2);
+                default:    
+                    return modregrm(code, inp, offset);
+            }
+        }
+        break;
+        case 0xF6:
+        {
+            if (offset >= inp.size()) {
+                throw out_of_range("at " + to_string(offset - 1));
+            }
+            const uint8_t &code2 = inp[offset];
+            if ((code2 & 0x38) == 0x08) {
+                THROW_INVALID(offset - 1, code, code2);
+                //return shared_ptr<OpCode>(new OpCodeNA(bstring{code, code2}));
+            }
+            std::cout << "HERE" << std::hex << (int) code << std::endl;
+            return modregrm(code, inp, offset);
+        }
+        break;
     }
     if ((code & 0xF8) == 0xD8) { //ESC
         std::cout << "HERE" << std::hex << (int) code << std::endl;
@@ -684,8 +734,9 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
         const uint8_t &code3 = inp[offset++];
         return shared_ptr<OpCode>(new OpCode{bstring{code, code2, code3}});
     }
-
-    throw out_of_range("AT THE END ");
+    stringstream ss;
+    ss << "AT THE END offset=" << offset << " code=" << code;
+    throw out_of_range(ss.str());
 }
 
 }

@@ -211,7 +211,10 @@ TEST(CallRegRm, test_call_regrm_rotate)
     
 
 }
-    /*    
+
+TEST(CallRegRm, test_call_regrm80) 
+{
+    /*
     0x80..0x81    mod000r/m ADD                  
     0x80..0x81    mod001r/m OR
     0x80..0x81    mod010r/m ADC
@@ -220,7 +223,44 @@ TEST(CallRegRm, test_call_regrm_rotate)
     0x80..0x81    mod101r/m SUB
     0x80..0x81    mod110r/m XOR
     0x80..0x81    mod111r/m CMP
+    */
+    
+    {
+        MockDisassm m;
+        EXPECT_CALL(m, modregrm(_,_,_)).Times(14);
+        for (size_t tt = 0; tt < 8; tt++) {
+            if (tt != 4) {
+                uint8_t code = 0x40 | (tt << 3);
+                {
+                    size_t offset = 0;
+                    bstring inp{0x80, code};
+                    m.decode(inp, offset);
+                }
+                {
+                    size_t offset = 0;
+                    bstring inp{0x81, code};
+                    m.decode(inp, offset);
+                }
+            }
+        }
+    }
+    {
+        MockDisassm m;
+        size_t offset = 0;
+        bstring inp{0x80, 0x60};
+        EXPECT_THROW(m.decode(inp, offset), std::invalid_argument);
+    }
+    {
+        MockDisassm m;
+        size_t offset = 0;
+        bstring inp{0x81, 0x60};
+        EXPECT_THROW(m.decode(inp, offset), std::invalid_argument);
+    }
+}
 
+TEST(CallRegRm, test_call_regrm82) 
+{
+    /*
     0x82..0x83    mod000r/m ADD      
                   0x82..0x83    mod001r/m   Exception
     0x82..0x83    mod010r/m ADC
@@ -229,8 +269,63 @@ TEST(CallRegRm, test_call_regrm_rotate)
     0x82..0x83    mod101r/m SUB
                   0x82..0x83    mod110r/m   Exception
     0x82..0x83    mod111r/m CMP
+    */
+    
+    {
+        MockDisassm m;
+        EXPECT_CALL(m, modregrm(_,_,_)).Times(10);
+        for (size_t tt = 0; tt < 8; tt++) {
+            switch (tt) {
+                case 0:
+                case 2:
+                case 3:
+                case 5:
+                case 7:
+                {
+                    uint8_t code = 0x40 | (tt << 3);
+                    {
+                        size_t offset = 0;
+                        bstring inp{0x82, code};
+                        m.decode(inp, offset);
+                    }
+                    {
+                        size_t offset = 0;
+                        bstring inp{0x83, code};
+                        m.decode(inp, offset);
+                    }
+                }
+            }
+        }
+    }
+    {
+        MockDisassm m;
+        for (size_t tt = 0; tt < 8; tt++) {
+            switch (tt) {
+                case 1:
+                case 4:
+                case 6:
+                {
+                    uint8_t code = 0x40 | (tt << 3);
+                    {
+                        size_t offset = 0;
+                        bstring inp{0x82, code};
+                        EXPECT_THROW(m.decode(inp, offset), std::invalid_argument);
+                    }
+                    {
+                        size_t offset = 0;
+                        bstring inp{0x83, code};
+                        EXPECT_THROW(m.decode(inp, offset), std::invalid_argument);
+                    }
+                }
+            }
+        }
+    }
+    
+}
 
-
+TEST(CallRegRm, test_call_regrmF6) 
+{
+    /*
     0xF6..0xF7    mod000r/m TEST
                   0xF6..0xF7    mod001r/m Exception
     0xF6..0xF7    mod010r/m NOT
@@ -239,6 +334,43 @@ TEST(CallRegRm, test_call_regrm_rotate)
     0xF6..0xF7    mod101r/m IMUL
     0xF6..0xF7    mod110r/m DIV
     0xF6..0xF7    mod111r/m IDIV
+    */
+    
+    {
+        MockDisassm m;
+        EXPECT_CALL(m, modregrm(_,_,_)).Times(14);
+        for (size_t tt = 0; tt < 8; tt++) {
+            if (tt != 1) {
+                uint8_t code = 0x40 | (tt << 3);
+                {
+                    size_t offset = 0;
+                    bstring inp{0xF6, code};
+                    m.decode(inp, offset);
+                }
+                {
+                    size_t offset = 0;
+                    bstring inp{0xF7, code};
+                    m.decode(inp, offset);
+                }
+            }
+        }
+    }
+    {
+        MockDisassm m;
+        size_t offset = 0;
+        bstring inp{0xF6, 0x08};
+        EXPECT_THROW(m.decode(inp, offset), std::invalid_argument);
+    }
+    {
+        MockDisassm m;
+        size_t offset = 0;
+        bstring inp{0xF7, 0x08};
+        EXPECT_THROW(m.decode(inp, offset), std::invalid_argument);
+    }
+}
+    /*    
+
+
 
     0xFE..0xFF    mod000r/m INC  
     0xFE..0xFF    mod001r/m DEC
@@ -250,3 +382,4 @@ TEST(CallRegRm, test_call_regrm_rotate)
     */
 
 }
+
