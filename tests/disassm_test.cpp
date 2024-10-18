@@ -387,6 +387,37 @@ TEST(CallRegRm, test_call_regrm82)
 
 }
 
+TEST(CallRegRm, test_call_regrm8F) 
+{
+    
+    {
+        MockDisassm m;
+        for (size_t tt = 1; tt < 8; tt++) {
+            uint8_t code = 0x40 | (tt << 3);
+            size_t offset = 0;
+            bstring inp{0x8F, code};
+            EXPECT_THROW(m.decode(inp, offset), std::invalid_argument);
+        }
+        {
+            size_t offset = 0;
+            bstring inp{0x8F};
+            EXPECT_THROW(m.decode(inp, offset), std::out_of_range);
+        }
+    }
+    
+    {
+        MockDisassm m;
+        EXPECT_CALL(m, modregrm(_,_,_)).Times(1);
+        {
+            size_t offset = 0;
+            bstring inp{0xFF, 0x00};
+            m.decode(inp, offset);
+        }
+    }
+    
+}
+
+
 TEST(CallRegRm, test_call_regrmF6) 
 {
     /*

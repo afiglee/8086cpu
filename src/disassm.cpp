@@ -553,6 +553,17 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
             }
             return modregrm(code, inp, offset);
         }
+        case 0x8F:
+        {
+            if (offset >= inp.size()) {
+                throw out_of_range("at " + to_string(offset - 1));
+            }
+            const uint8_t &code2 = inp[offset];
+            if ((code2 & 0x38) == 0) {
+                return modregrm(code, inp, offset);
+            }
+            THROW_INVALID(offset - 1, code, code2);
+        }
         case 0xFE:
         {
             if (offset >= inp.size()) {
