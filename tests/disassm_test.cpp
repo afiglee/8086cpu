@@ -77,10 +77,19 @@ TEST(Disassm, test_one_operand)
    
     Disassm disassm;
     uint8_t codes[] = {
+        0x06, 0x07, 
+        0x0E, 0x0F,
+        0x16, 0x17,
+        0x1E, 0x1F,
+
         0x27,   //DAA
         0x2F,   //DAS
         0x37,   //AAA
         0x3F,   //AAS
+        0x50, 0x51, 0x52, 0x53,
+        0x54, 0x55, 0x56, 0x57,
+        0x58, 0x59, 0x5A, 0x5B,
+        0x5C, 0x5D, 0x5E, 0x5F,
         0x90, 0x91, 0x92, 0x93,
         0x94, 0x95, 0x96, 0x97,
         0x98,   //CBW
@@ -492,11 +501,6 @@ TEST(CallRegRm, test_call_regrmFF)
         MockDisassm m;
         {
             size_t offset = 0;
-            bstring inp{0xFF, 0x30};
-            EXPECT_THROW(m.decode(inp, offset), std::invalid_argument);
-        }
-        {
-            size_t offset = 0;
             bstring inp{0xFF, 0x38};
             EXPECT_THROW(m.decode(inp, offset), std::invalid_argument);
         }
@@ -509,8 +513,8 @@ TEST(CallRegRm, test_call_regrmFF)
     
     {
         MockDisassm m;
-        EXPECT_CALL(m, modregrm(_,_,_)).Times(6);
-        for (size_t tt = 0; tt < 6; tt++) {
+        EXPECT_CALL(m, modregrm(_,_,_)).Times(7);
+        for (size_t tt = 0; tt < 7; tt++) {
             uint8_t code = 0x40 | (tt << 3);
             {
                 size_t offset = 0;

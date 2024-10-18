@@ -18,7 +18,7 @@ using std::stringstream;
 using std::ostream;
 using std::hex;
 using std::setw;
-
+using std::setfill;
 
 #define THROW_INVALID(offset, code, code2) {\
     stringstream ss;\
@@ -27,7 +27,7 @@ using std::setw;
 }
 
 ostream &operator<<(ostream& os, const uint8_t &u) {
-    os << "0x" << setw(2) << hex << (int) u;
+    os << "0x" << setfill('0') << setw(2) << hex << (int) u;
     return os;
 }
 
@@ -479,6 +479,14 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
     const uint8_t &code = inp[offset++];
     std::cout << "ENTER=" << code << " offset=" << offset << std::endl;
     switch (code) {  
+        case 0x06:
+        case 0x07:
+        case 0x0E:
+        case 0x0F:
+        case 0x16:
+        case 0x17:
+        case 0x1E:
+        case 0x1F:
         case BAA:     //0x27
         case DAS:     //0x2F
         case AAA:     //0x37
@@ -566,8 +574,7 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
             }
             std::cout << "GOT2" << std::endl;
             const uint8_t &code2 = inp[offset];
-            if ((code2 & 0x38) == 0x38 ||
-                (code2 & 0x38) == 0x30) {
+            if ((code2 & 0x38) == 0x38) {
                 std::cout << "GOT3" << std::endl;
                 //return shared_ptr<OpCode>(new OpCodeNA{bstring{code, code2}});
                 THROW_INVALID(offset - 1, code, code2);
@@ -629,6 +636,10 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
     }
     std::cout << "PASSED code=" << code << " offset=" << offset << std::endl;
     switch (0xFC & code) {
+        case 0x50:
+        case 0x54:
+        case 0x58:
+        case 0x5C:
         case 0x90:
         case 0x94:
         case 0x9C:
