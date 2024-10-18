@@ -4,7 +4,7 @@
 #include <cstdint>
 #include "basetypes.h"
 
-namespace afiglee {
+namespace sim86 {
 class Reg final {
 public:
 

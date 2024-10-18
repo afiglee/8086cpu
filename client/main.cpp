@@ -24,7 +24,7 @@ using std::filesystem::file_size;
 using std::ifstream;
 using std::ios;
 
-using afiglee::bstring;
+using sim86::bstring;
 
 const ssize_t MAX_BIN_FILE_SIZE{1<<20};
 void usage(){
@@ -125,12 +125,12 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
     ifstream in{binfile, ios::binary};
-    afiglee::ROM rom(rom_loaded_at);
+    sim86::ROM rom(rom_loaded_at);
     rom << in;
     cout << "Bin size=" << rom.size() << endl;
     //cout << rom;
 
-    afiglee::CPU_8086 cpu;
+    sim86::CPU_8086 cpu;
 
     return ret;
 }

@@ -1,5 +1,6 @@
 add_library(disassm
             opcode.cpp
+            basetypes.cpp
             disassm.cpp)
 
 set_target_properties(disassm PROPERTIES LINKER_LANGUAGE CXX)

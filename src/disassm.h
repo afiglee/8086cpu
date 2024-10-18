@@ -5,7 +5,7 @@
 #include "basetypes.h"
 
 using std::shared_ptr;
-namespace afiglee {
+namespace sim86 {
 class Disassm {
 
 public:
@@ -13,10 +13,11 @@ public:
     Disassm(enum FLAVOUR flavour = x8086_88);
     virtual pOpCode decode(const bstring& inp, size_t& offset);    
 protected:
-    pOpCode Disassm::modregrm(const uint8_t &code, bstring& inp, size_t& offset);
+    virtual pOpCode modregrm(const uint8_t &code, const bstring& inp, size_t& offset);
+   // pOpCode modrm(const uint8_t &code, bstring& inp, size_t& offset);
     enum FLAVOUR m_flavour;
     //array<shared_ptr<OpCode>, 256> m_opcodes;
-    array<enum E_BYTE_LENGTH, 256> m_opcode_lengths;
+   // array<enum E_BYTE_LENGTH, 256> m_opcode_lengths;
 
 };
 

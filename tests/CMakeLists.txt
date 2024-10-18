@@ -1,12 +1,12 @@
 add_executable(disassm.t
-               opcode0_test.cpp
-               opcode1_test.cpp
-               opcode2_test.cpp
-               opcode3_test.cpp
-               opcodeTwo_test.cpp
-               opcodeThree_test.cpp
-               opcodeSingle_test.cpp
-               opcodeMulti_test.cpp
+               #opcode0_test.cpp
+               #opcode1_test.cpp
+               #opcode2_test.cpp
+               #opcode3_test.cpp
+               #opcodeTwo_test.cpp
+               #opcodeThree_test.cpp
+               #opcodeSingle_test.cpp
+               #opcodeMulti_test.cpp
                disassm_test.cpp
                test_main.cpp)
 target_compile_features(disassm.t PRIVATE cxx_std_17)  
@@ -25,7 +25,7 @@ else()
     target_include_directories(disassm.t PRIVATE . ../src/)
 endif()
 
-target_link_libraries(disassm.t disassm gtest)
+target_link_libraries(disassm.t disassm gtest gmock)
 target_link_directories(disassm.t PRIVATE ${GOOGLETEST_PREFIX}/lib/)
 
 add_test(NAME disassm.t 

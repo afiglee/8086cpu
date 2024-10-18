@@ -9,6 +9,19 @@ using std::runtime_error;
 using std::range_error;
 using std::make_shared;
 using std::stringstream;
+namespace sim86{
+
+OpCode::OpCode(bstring && bcode, enum DIALECT eDialect):
+    m_operands{std::move(bcode)}, m_eDialect(eDialect)
+{
+
+}
+#if 0
+OpCodeNA::OpCodeNA(bstring && bcode, enum DIALECT eDialect):
+    OpCode(std::move(bcode), eDialect)
+{
+
+}
 
 static void to_reg(string& mnemonic, uint8_t code)
 {
@@ -472,4 +485,6 @@ pOpCode OpCode3::_get(const bin_string& inp, size_t& offset) {
 pOpCode OpCodeMulti::_get(const bin_string& inp, size_t& offset)
 {
     return OpCode::_get(inp, offset);
+}
+#endif
 }
