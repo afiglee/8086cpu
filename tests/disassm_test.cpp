@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <iostream>
+#include <exception>
 
 #include "opcode.h"
 #include "disassm.h"
@@ -166,6 +167,12 @@ TEST(CallRegRm, test_call_regrmXXX)
         bstring inp{code, 0x00};
         m.decode(inp, offset);
     }
+    for (auto code:codes) {
+        size_t offset = 0;
+        bstring inp{code};
+        EXPECT_THROW(m.decode(inp, offset), std::out_of_range);
+    }
+
 }
 
 
@@ -206,6 +213,14 @@ TEST(CallRegRm, test_call_regrm_rotate)
             size_t offset = 0;
             bstring inp{code, 0x70};
             EXPECT_THROW(m.decode(inp, offset), std::invalid_argument);
+        }
+    }
+    {
+        for (auto code:codes) {
+            MockDisassm m;
+            size_t offset = 0;
+            bstring inp{code};
+            EXPECT_THROW(m.decode(inp, offset), std::out_of_range);
         }
     }
     
@@ -256,6 +271,19 @@ TEST(CallRegRm, test_call_regrm80)
         bstring inp{0x81, 0x60};
         EXPECT_THROW(m.decode(inp, offset), std::invalid_argument);
     }
+    {
+        MockDisassm m;
+        size_t offset = 0;
+        bstring inp{0x80};
+        EXPECT_THROW(m.decode(inp, offset), std::out_of_range);
+    }
+    {
+        MockDisassm m;
+        size_t offset = 0;
+        bstring inp{0x81};
+        EXPECT_THROW(m.decode(inp, offset), std::out_of_range);
+    }
+
 }
 
 TEST(CallRegRm, test_call_regrm82) 
@@ -320,7 +348,19 @@ TEST(CallRegRm, test_call_regrm82)
             }
         }
     }
-    
+    {
+        MockDisassm m;
+        size_t offset = 0;
+        bstring inp{0x82};
+        EXPECT_THROW(m.decode(inp, offset), std::out_of_range);
+    }
+    {
+        MockDisassm m;
+        size_t offset = 0;
+        bstring inp{0x83};
+        EXPECT_THROW(m.decode(inp, offset), std::out_of_range);
+    }
+
 }
 
 TEST(CallRegRm, test_call_regrmF6) 
@@ -367,19 +407,189 @@ TEST(CallRegRm, test_call_regrmF6)
         bstring inp{0xF7, 0x08};
         EXPECT_THROW(m.decode(inp, offset), std::invalid_argument);
     }
+    {
+        MockDisassm m;
+        size_t offset = 0;
+        bstring inp{0xF6};
+        EXPECT_THROW(m.decode(inp, offset), std::out_of_range);
+    }
+    {
+        MockDisassm m;
+        size_t offset = 0;
+        bstring inp{0xF7};
+        EXPECT_THROW(m.decode(inp, offset), std::out_of_range);
+    }
 }
-    /*    
 
+TEST(CallRegRm, test_call_regrmFE) 
+{
+    /*
+    0xFE          mod000r/m INC  
+    0xFE          mod001r/m DEC
+    */
+    
+    {
+        MockDisassm m;
+        EXPECT_CALL(m, modregrm(_,_,_)).Times(2);
+        {
+            size_t offset = 0;
+            bstring inp{0xFE, 0x0};
+            m.decode(inp, offset);
+        }
+        {
+            size_t offset = 0;
+            bstring inp{0xFE, 0x08};
+            m.decode(inp, offset);
+        }
+        {
+            size_t offset = 0;
+            bstring inp{0xFE};
+            EXPECT_THROW(m.decode(inp, offset), std::out_of_range);
+        }
+    }
+    {
+        MockDisassm m;
+        for (size_t tt = 2; tt < 8; tt++) {
+            uint8_t code = 0x40 | (tt << 3);
+            {
+                size_t offset = 0;
+                bstring inp{0xFE, code};
+                EXPECT_THROW(m.decode(inp, offset), std::invalid_argument);
+            }
+        }
+    }
+}
 
-
-    0xFE..0xFF    mod000r/m INC  
-    0xFE..0xFF    mod001r/m DEC
-
+TEST(CallRegRm, test_call_regrmFF) 
+{
+    /*
+    0xFF          mod000r/m INC
+    0xFF          mod001r/m DEC
     0xFF          mod010r/m CALL
     0xFF          mod011r/m CALL
     0xFF          mod100r/m JMP
     0xFF          mod101r/m JMP
+                  0xFF mod110r/m    Exception
+                  0xFF mod111r/m    Exception
+    */
+    
+    {
+        MockDisassm m;
+        {
+            size_t offset = 0;
+            bstring inp{0xFF, 0x30};
+            EXPECT_THROW(m.decode(inp, offset), std::invalid_argument);
+        }
+        {
+            size_t offset = 0;
+            bstring inp{0xFF, 0x38};
+            EXPECT_THROW(m.decode(inp, offset), std::invalid_argument);
+        }
+        {
+            size_t offset = 0;
+            bstring inp{0xFF};
+            EXPECT_THROW(m.decode(inp, offset), std::out_of_range);
+        }
+    }
+    
+    {
+        MockDisassm m;
+        EXPECT_CALL(m, modregrm(_,_,_)).Times(6);
+        for (size_t tt = 0; tt < 6; tt++) {
+            uint8_t code = 0x40 | (tt << 3);
+            {
+                size_t offset = 0;
+                bstring inp{0xFF, code};
+                m.decode(inp, offset);
+            }
+        }
+    }
+    
+}
+
+TEST(TwoBytes, testTwoBytes) {
+    /*
+       case 0xCD:      //int x
+        case 0xEB:      //jmp
+        case 0x70:      //JO
+        case 0x71:      //JNO
+        case 0x72:      //JB/JNAE
+        case 0x73:      //JNB/JA
+        case 0x74:      //JE/JZ
+        case 0x75:      //JNE/JNZ
+        case 0x76:      //JBE/JNA
+        case 0x77:      //JNBE/JA
+        case 0x78:      //JS
+        case 0x79:      //JNS
+        case 0x7A:      //JP/JPE
+        case 0x7B:      //JNP/JPO
+        case 0x7C:      //JL/JNGE
+        case 0x7D:      //JNL/JGE
+        case 0x7E:      //JLE/JNG
+        case 0x7F:      //JNLE/JG
+    */
+    
+    Disassm m;
+    for (uint8_t tt = 0x70; tt < 0x80; tt++) {
+            size_t offset = 0;
+            bstring inp{tt, 0xFF};
+            auto pC = m.decode(inp, offset);
+            ASSERT_TRUE(offset == 2);
+            ASSERT_TRUE(pC->operands().size() == 2);
+    }
+    for (uint8_t tt = 0x70; tt < 0x80; tt++) {
+            size_t offset = 0;
+            bstring inp{tt};
+            EXPECT_THROW(m.decode(inp, offset), std::out_of_range);
+    }
+
+    uint8_t codes[] {
+        0x04, 0x0C, 0x14, 0x1C,
+        0x24, 0x2C, 0x34, 0x3C,
+        0xA8, 0xCD, 0xEB};
+
+    /* 2 bytes
+    0x04
+    0x0C
+    0x14
+    0x1C
+    0x24
+    0x2C
+    0x34
+    0x3C
+    0xA8
+    0xCD
+    0xEB
     */
 
+    
+    for (auto code:codes)
+    {
+        size_t offset = 0;
+        bstring inp{code, 0xFF};
+        auto pC = m.decode(inp, offset);
+        ASSERT_TRUE(offset == 2);
+        ASSERT_TRUE(pC->operands().size() == 2);
+    }
+    for (auto code:codes)
+    {
+        size_t offset = 0;
+        bstring inp{code};
+        EXPECT_THROW(m.decode(inp, offset), std::out_of_range);
+    }
+
+}
+
+/* 3 bytes
+    0x05
+    0x0D
+    0x15
+    0x1D
+    0x25
+    0x35
+    0x2D
+    0x3D
+    0xA9
+    */
 }
 

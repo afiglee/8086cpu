@@ -477,7 +477,7 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
         throw out_of_range("at " + to_string(offset));
     }
     const uint8_t &code = inp[offset++];
-
+    std::cout << "ENTER=" << code << " offset=" << offset << std::endl;
     switch (code) {  
         case BAA:     //0x27
         case DAS:     //0x2F
@@ -544,13 +544,15 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
         }    
         case 0xFF: 
         {
+            std::cout << "GOT" << std::endl;
             if (offset >= inp.size()) {
                 throw out_of_range("at " + to_string(offset - 1));
             }
+            std::cout << "GOT2" << std::endl;
             const uint8_t &code2 = inp[offset];
             if ((code2 & 0x38) == 0x38 ||
                 (code2 & 0x38) == 0x30) {
-                
+                std::cout << "GOT3" << std::endl;
                 //return shared_ptr<OpCode>(new OpCodeNA{bstring{code, code2}});
                 THROW_INVALID(offset - 1, code, code2);
             }
@@ -600,7 +602,7 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
         default:
         break;
     }
-
+    std::cout << "PASSED code=" << code << " offset=" << offset << std::endl;
     switch (0xFC & code) {
         case 0xD0: //Rotate
         {
@@ -629,6 +631,7 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
         case OR_DW_MASK:  //0x08
         case XOR_DW_MASK: //0x30
         {
+            std::cout << "GOT30 offset=" << offset << std::endl;
             if (offset >= inp.size()) {
                 throw out_of_range("at " + to_string(offset - 1));
             }
@@ -724,6 +727,9 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
     }
     if ((code & 0xF8) == 0xD8) { //ESC
         std::cout << "HERE" << std::hex << (int) code << std::endl;
+        if (offset >= inp.size()) {
+            throw out_of_range("at " + to_string(offset));
+        }
         return modregrm(code, inp, offset);
     }
     if ((code & 0xF7) == 0xC2) { // variants of RET
