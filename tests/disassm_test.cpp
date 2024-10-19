@@ -387,36 +387,79 @@ TEST(CallRegRm, test_call_regrm82)
 
 }
 
+TEST(CallRegRm, test_call_regrm8C) 
+{
+    /*
+    0x8C  
+    0x8E 
+    */
+    uint8_t opcodes[] {
+        0x8E, 0x8C
+    };
+    {
+        MockDisassm m;
+        EXPECT_CALL(m, modregrm(_,_,_)).Times(8);
+        for (auto opcode: opcodes)
+        {
+            for (uint8_t tt = 0; tt < 4; tt++)
+            {
+                size_t offset = 0;
+                uint8_t code2 = 0x40 | (tt << 3);
+                bstring inp{opcode, code2};
+                m.decode(inp, offset);
+            }
+            {
+                size_t offset = 0;
+                bstring inp{opcode};
+                EXPECT_THROW(m.decode(inp, offset), std::out_of_range);
+            }
+            for (uint8_t tt = 0; tt < 4; tt++)
+            {
+                size_t offset = 0;
+                uint8_t code2 = 0x60 | (tt << 3);
+                bstring inp{opcode, code2};
+                EXPECT_THROW(m.decode(inp, offset), std::invalid_argument);
+            }
+
+        }
+    }
+   
+}
+
 TEST(CallRegRm, test_call_regrm8F) 
 {
-    
+    uint8_t opcodes[] {
+        0x8F, 0xC6, 0xC7
+    };
+    for (auto opcode:opcodes)
     {
         MockDisassm m;
         for (size_t tt = 1; tt < 8; tt++) {
             uint8_t code = 0x40 | (tt << 3);
             size_t offset = 0;
-            bstring inp{0x8F, code};
+            bstring inp{opcode, code};
             EXPECT_THROW(m.decode(inp, offset), std::invalid_argument);
         }
         {
             size_t offset = 0;
-            bstring inp{0x8F};
+            bstring inp{opcode};
             EXPECT_THROW(m.decode(inp, offset), std::out_of_range);
         }
     }
     
     {
         MockDisassm m;
-        EXPECT_CALL(m, modregrm(_,_,_)).Times(1);
+        
+        EXPECT_CALL(m, modregrm(_,_,_)).Times(3);
+        for (auto opcode:opcodes)
         {
             size_t offset = 0;
-            bstring inp{0xFF, 0x00};
+            bstring inp{opcode, 0x00};
             m.decode(inp, offset);
         }
     }
     
 }
-
 
 TEST(CallRegRm, test_call_regrmF6) 
 {
@@ -689,7 +732,11 @@ TEST(ThreeBytes, testThreeBytes) {
     uint8_t codes[] {
         0x05, 0x0D, 0x15, 0x1D,
         0x25, 0x2D, 0x35, 0x3D,
-        0xA9, 0xC2, 0xCA, 0xE8,
+        0xA0, 0xA1, 0xA2, 0xA3,
+        0xA9, 
+        0xB8, 0xB9, 0xBA, 0xBB,
+        0xBC, 0xBD, 0xBE, 0xBF,
+        0xC2, 0xCA, 0xE8,
         0xE9
     };
     

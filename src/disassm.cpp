@@ -553,6 +553,19 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
             }
             return modregrm(code, inp, offset);
         }
+        case 0x8C:
+        case 0x8E:
+        {
+            if (offset >= inp.size()) {
+                throw out_of_range("at " + to_string(offset - 1));
+            }
+            const uint8_t &code2 = inp[offset];
+            if (code2 & 0x20) {
+                THROW_INVALID(offset - 1, code, code2);
+            }
+            return modregrm(code, inp, offset);
+        }
+        break;
         case 0x8F:
         {
             if (offset >= inp.size()) {
@@ -647,6 +660,25 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
     }
     std::cout << "PASSED code=" << code << " offset=" << offset << std::endl;
     switch (0xFC & code) {
+        case 0xB0:
+        case 0xB4:
+        {
+            if (offset >= inp.size()) {
+                throw out_of_range("at " + to_string(offset - 1));
+            }
+            const uint8_t &code2 = inp[offset++];
+            return shared_ptr<OpCode>(new OpCode{bstring{code, code2}});
+        }
+        case 0xB8:
+        case 0xBC:
+        {
+            if ((offset + 1) >= inp.size()) {
+                throw out_of_range("at " + to_string(offset - 1));
+            }
+            const uint8_t &code2 = inp[offset++];
+            const uint8_t &code3 = inp[offset++];
+            return shared_ptr<OpCode>(new OpCode{bstring{code, code2, code3}});
+        }
         case 0x50:
         case 0x54:
         case 0x58:
@@ -738,6 +770,8 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
                 return shared_ptr<OpCode>(new OpCode{bstring{code, code2}});
             }            
         }
+        case 0xA0:
+        case 0xA2:
         case 0xE8:          // jmp or call
         {
             if ((offset + 1) >= inp.size()) {
@@ -776,6 +810,17 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
             }
         }
         break;
+        case 0xC6:
+        {
+            if (offset >= inp.size()) {
+                throw out_of_range("at " + to_string(offset - 1));
+            }
+            const uint8_t &code2 = inp[offset];
+            if ((code2 & 0x38) == 0) {
+                return modregrm(code, inp, offset);
+            }
+            THROW_INVALID(offset - 1, code, code2);
+        }
         case 0xF6:
         {
             if (offset >= inp.size()) {
