@@ -195,7 +195,10 @@ int main(int argc, char *argv[]) {
             if (!rom.was_visited(old_offset, offset - old_offset)){
                 rom.mark_bits(old_offset, offset - old_offset);
             }
-            std::cout << "Decoded :" << *pCode << " offset=";
+
+            //std::cout << "Decoded :"; 
+            pCode->print(std::cout);
+            std::cout << "; offset=";
             print20(std::cout, offset);
             std::cout << std::endl;
             size_t next_offset = rom.get_next_offset(pCode, offset);
@@ -204,7 +207,7 @@ int main(int argc, char *argv[]) {
             }
             //TODO - adjust for subroutines
             offset = next_offset;
-            std::cout << "Next offset=";
+            std::cout << "\tNext offset=";
             print20(std::cout, offset);
             std::cout << std::endl;
         }

@@ -12,8 +12,8 @@ using std::make_shared;
 using std::stringstream;
 namespace sim86{
 
-OpCode::OpCode(bstring && bcode, enum DIALECT eDialect):
-    m_operands{std::move(bcode)}, m_eDialect(eDialect)
+OpCode::OpCode(bstring && bcode, bool byte_operands, enum DIALECT eDialect):
+    m_operands{std::move(bcode)}, m_byte_operands{byte_operands}, m_eDialect{eDialect}
 {
 
 }
@@ -21,7 +21,41 @@ OpCode::OpCode(bstring && bcode, enum DIALECT eDialect):
 std::ostream& operator<<(std::ostream& os, const OpCode &oCode)
 {
     const uint8_t &code = oCode.m_operands[0];
+    switch (code & 0xF0) {
+        default:
+            break;
+    }
+    switch (code & 0xF8) {
+        case MOV_IRW_MASK3:
+        {
+            os << "mov " << OpCode::get_register16_name(code) << ", " << TO_UINT16(oCode.m_operands[1], oCode.m_operands[2]);
+        }
+        return os;
+        case MOV_IRB_MASK3:
+        {
+            os << "mov " << OpCode::get_register8_name(code) << ", " << oCode.m_operands[1];
+        }
+        return os;
+        default:
+            break;
+    }
+
     switch(code) {
+        case LAHF:
+        {
+            os << "lahf";
+        }
+        break;
+        case RET:
+        {
+            os << "ret";
+        }
+        break;
+        case RETF:
+        {
+            os << "retf";
+        }
+        break;
         case LJMP: //long_jump
         {
             
@@ -32,7 +66,18 @@ std::ostream& operator<<(std::ostream& os, const OpCode &oCode)
             print20(os, addr);
         }
         break;
-        default: {
+        case CLI:
+        {
+            os << "cli";
+        }
+        break;
+        case SAHF:
+        {
+            os << "sahf";
+        }
+        break;
+        default:
+        {
             stringstream ss;
             ss << "operator<< is missing for opcodes:";
             for (auto code: oCode.m_operands) {
@@ -40,10 +85,152 @@ std::ostream& operator<<(std::ostream& os, const OpCode &oCode)
             }
             throw sim86::unimplemented_exception(ss.str());
         }
+
         break;
     }
 
     return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const AddressedOpCode &oCode)
+{
+    const uint8_t &code = oCode.m_operands[0];
+    switch (code & 0xF0) {
+        case JXX_MASK4:
+        {
+            //os << oCode.m_own_address << " " << oCode.m_operands[1] << " ";
+            switch (code) {
+                case JO:
+                    os << "jo";
+                    break;
+                case JNO:
+                    os << "jno";
+                    break;
+                case JB:
+                    os << "jb";
+                    break;
+                case JAE:
+                    os << "jae";
+                    break;
+                case JE:
+                    os << "je";
+                    break;
+                case JNE:
+                    os << "jne";
+                    break;
+                case JBE:
+                    os << "jbe";
+                    break;
+                case JA:
+                    os << "ja";
+                    break;    
+                case JS:
+                    os << "js";
+                    break;
+                case JNS:
+                    os << "jns";
+                    break;
+                case JP:
+                    os << "jp";
+                    break;
+                case JNP:
+                    os << "jnp";
+                    break;
+                case JL:
+                    os << "jl";
+                    break;
+                case JGE:
+                    os << "jge";
+                    break;
+                case JLE:
+                    os << "jle";
+                    break;
+                default:    
+                case JG:
+                    os << "jg";
+                    break;
+            }
+            uint16_t goto_address = oCode.m_own_address +2;
+            goto_address += (int8_t) oCode.m_operands[1];
+            os << " ";
+            print16(os, goto_address);
+        }
+        return os;
+        default:
+            break;
+    }
+    stringstream ss;
+    ss << "operator<< is missing for opcodes:";
+    for (auto code: oCode.m_operands) {
+        ss << " " << code;
+    }
+    throw sim86::unimplemented_exception(ss.str());
+
+}
+
+std::string OpCode::decode_mod_rm() const
+{
+    switch (m_operands[1] & 0xC0) {
+        case 0x00:
+
+        break;
+        case 0x40:
+
+        break;
+        case 0x80:
+
+        break;
+        default: //0xC0
+            ;
+    }
+    return "";
+}
+
+std::string OpCode::get_register8_name(uint8_t reg)
+{
+    switch (reg & 0x07) {
+        case 00:
+            return "al";
+        case 01:
+            return "cl";
+        case 02:
+            return "dl";
+        case 03:
+            return "bl";
+        case 04:
+            return "ah";
+        case 05:
+            return "ch";
+        case 06:
+            return "dh";
+        default: // to turn off warning    
+        case 07:
+            return "bh";
+    }
+}
+
+std::string OpCode::get_register16_name(uint8_t reg)
+{
+    switch (reg & 0x07) {
+        case 00:
+            return "ax";
+        case 01:
+            return "cx";
+        case 02:
+            return "dx";
+        case 03:
+            return "bx";
+        case 04:
+            return "sp";
+        case 05:
+            return "bp";
+        case 06:
+            return "si";
+        default: //to turn off warning    
+        case 07:
+            return "di";
+    }
+
 }
 
 uint32_t OpCode::calc_address(uint16_t segment, uint16_t offset) {

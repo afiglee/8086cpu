@@ -16,7 +16,33 @@ using std::string_view;
 
 namespace sim86 {
 
-#define LJMP    0xEA
+#define JXX_MASK4       0x70
+#define JO              0x70
+#define JNO             0x71      //JNO
+#define JB              0x72      //JB/JNAE
+#define JAE             0x73      //JNB/JA
+#define JE              0x74      //JE/JZ
+#define JNE             0x75      //JNE/JNZ
+#define JBE             0x76      //JBE/JNA
+#define JA              0x77      //JNBE/JA
+#define JS              0x78      //JS
+#define JNS             0x79      //JNS
+#define JP              0x7A      //JP/JPE
+#define JNP             0x7B      //JNP/JPO
+#define JL              0x7C      //JL/JNGE
+#define JGE             0x7D      //JNL/JGE
+#define JLE             0x7E      //JLE/JNG
+#define JG              0x7F      //JNLE/JG
+
+#define SAHF            0x9E
+#define LAHF            0x9F
+#define MOV_IRW_MASK3   0xB8 //MOV Immediate data to Word Register, 3 bit mask 0xF8
+#define MOV_IRB_MASK3   0xB0 //MOV Immediate data to Byte Register, 3 bit mask 0xF8
+#define RET             0xC3
+#define RETF            0xCB
+#define SHR
+#define LJMP            0xEA
+#define CLI             0xFA
 
 class OpCode;
 typedef std::shared_ptr<OpCode>    pOpCode;
@@ -66,23 +92,44 @@ class CPU {
 class OpCode {
     public:
         //OpCode(uint8_t code, enum DIALECT eDialect = INTEL);
-        OpCode(bstring && bcode, enum DIALECT eDialect = INTEL);
+        OpCode(bstring && bcode, bool byte_operands, enum DIALECT eDialect = INTEL);
 
+        static uint32_t calc_address(uint16_t segment, uint16_t offset);
+        static std::string get_register8_name(uint8_t reg);
+        static std::string get_register16_name(uint8_t reg);
    //     const string& mnemonic() const;
         friend std::ostream& operator<<(std::ostream& os, const OpCode &oCode);
         const bstring &operands() const {return m_operands;}
-
-        static uint32_t calc_address(uint16_t segment, uint16_t offset);
+        virtual std::ostream &print(std::ostream &os) {
+            return os << *this;
+        }
+        
         ssize_t calc_new_address(uint32_t d_start, size_t offset);
 
     protected:
-        
-  //      virtual pOpCode _get(const bin_string& inp, size_t& offset);
-
-//    string_view m_head;
-//    string m_mnemonic;
+        std::string decode_mod_rm() const;
+  
     bstring m_operands;
+    bool m_byte_operands;
     enum DIALECT m_eDialect;
+};
+
+// This class is used for relative jumps and takes offset address 
+// inside segment
+class AddressedOpCode : public OpCode {
+public:
+    AddressedOpCode(uint16_t own_address, uint8_t code, uint8_t offset, DIALECT eDialect = INTEL):
+        OpCode(bstring(code, offset), false, eDialect), m_own_address(own_address) {
+            if ((code & JXX_MASK4) != JXX_MASK4) {
+                throw std::invalid_argument("Wrong opcode for AddressedOpCode");
+            }
+    }
+    std::ostream &print(std::ostream &os) override {
+            return os << *this;
+    }
+    friend std::ostream& operator<<(std::ostream& os, const AddressedOpCode &oCode);
+    protected:
+        uint16_t m_own_address;
 };
 
 #if 0

@@ -8,7 +8,7 @@ namespace sim86 {
 
 class MockDisassm : public Disassm {
 public:    
-    MOCK_METHOD3(modregrm, pOpCode(const uint8_t&, const bstring&, size_t&));
+    MOCK_METHOD4(modregrm, pOpCode(const uint8_t&, const bstring&, size_t&, bool));
 };
 }
 

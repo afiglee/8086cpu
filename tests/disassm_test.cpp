@@ -18,8 +18,8 @@ using ::testing::_;
 namespace sim86 {
 class TestDisassm : public Disassm, public ::testing::Test {
     public:
-        pOpCode modregrm(const uint8_t &code, const bstring& inp, size_t& offset) {
-            return Disassm::modregrm(code, inp, offset);
+        pOpCode modregrm(const uint8_t &code, const bstring& inp, size_t& offset, bool byte_operands) {
+            return Disassm::modregrm(code, inp, offset, byte_operands);
         }
 };
 
@@ -33,12 +33,12 @@ TEST_F(TestDisassm, test_modregrm_reg) {
         if (tt == 0x06) {
             bstring inp2{00, op, 0xFA};
            // modregrm(00, inp2, offset);
-            EXPECT_THROW(modregrm(00, inp2, offset), std::out_of_range);
+            EXPECT_THROW(modregrm(00, inp2, offset, false), std::out_of_range);
             offset = 1;
-            pOpCode ret = modregrm(00, inp, offset);
+            pOpCode ret = modregrm(00, inp, offset, false);
             ASSERT_TRUE(offset == 4);            
         } else {
-            pOpCode ret = modregrm(00, inp, offset);
+            pOpCode ret = modregrm(00, inp, offset, false);
             ASSERT_TRUE(offset == 2);
         }
     }
@@ -49,25 +49,25 @@ TEST_F(TestDisassm, test_modregrm) {
         size_t offset = 1;
         uint8_t op = 0x40 | tt;
         bstring inp{0x23, op, 0xFA};
-        pOpCode ret = modregrm(00, inp, offset);
+        pOpCode ret = modregrm(00, inp, offset, false);
         ASSERT_TRUE(offset == 3);
     }
     for (uint8_t tt = 0; tt < 8; tt++) {
         size_t offset = 1;
         uint8_t op = 0x80 | tt;
         bstring inp{0x32, op, 0xFA, 0xFC};
-        pOpCode ret = modregrm(00, inp, offset);
+        pOpCode ret = modregrm(00, inp, offset, false);
         ASSERT_TRUE(offset == 4);
     }
     {
         size_t offset = 1;
         bstring inp{0x21, 0x40};
-        EXPECT_THROW(modregrm(0x22, inp, offset), std::out_of_range);
+        EXPECT_THROW(modregrm(0x22, inp, offset, false), std::out_of_range);
     }
     {
         size_t offset = 1;
         bstring inp{0x21, 0x80, 0xFA};
-        EXPECT_THROW(modregrm(0x22, inp, offset), std::out_of_range);
+        EXPECT_THROW(modregrm(0x22, inp, offset, false), std::out_of_range);
     }
 
 }
@@ -185,7 +185,7 @@ TEST(CallRegRm, test_call_regrmXXX)
     
 
     MockDisassm m;
-    EXPECT_CALL(m, modregrm(_,_,_)).Times(42+9);
+    EXPECT_CALL(m, modregrm(_,_,_,_)).Times(42+9);
     for (auto code:codes) {
         size_t offset = 0;
         bstring inp{code, 0x00};
@@ -218,7 +218,7 @@ TEST(CallRegRm, test_call_regrm_rotate)
 
     {
         MockDisassm m;
-        EXPECT_CALL(m, modregrm(_,_,_)).Times(28);
+        EXPECT_CALL(m, modregrm(_,_,_,_)).Times(28);
         for (auto code:codes) {
             for (size_t tt = 0; tt < 8; tt++) {
                 if (tt != 6) {
@@ -266,7 +266,7 @@ TEST(CallRegRm, test_call_regrm80)
     
     {
         MockDisassm m;
-        EXPECT_CALL(m, modregrm(_,_,_)).Times(14);
+        EXPECT_CALL(m, modregrm(_,_,_,_)).Times(14);
         for (size_t tt = 0; tt < 8; tt++) {
             if (tt != 4) {
                 uint8_t code = 0x40 | (tt << 3);
@@ -325,7 +325,7 @@ TEST(CallRegRm, test_call_regrm82)
     
     {
         MockDisassm m;
-        EXPECT_CALL(m, modregrm(_,_,_)).Times(10);
+        EXPECT_CALL(m, modregrm(_,_,_,_)).Times(10);
         for (size_t tt = 0; tt < 8; tt++) {
             switch (tt) {
                 case 0:
@@ -398,7 +398,7 @@ TEST(CallRegRm, test_call_regrm8C)
     };
     {
         MockDisassm m;
-        EXPECT_CALL(m, modregrm(_,_,_)).Times(8);
+        EXPECT_CALL(m, modregrm(_,_,_,_)).Times(8);
         for (auto opcode: opcodes)
         {
             for (uint8_t tt = 0; tt < 4; tt++)
@@ -450,7 +450,7 @@ TEST(CallRegRm, test_call_regrm8F)
     {
         MockDisassm m;
         
-        EXPECT_CALL(m, modregrm(_,_,_)).Times(3);
+        EXPECT_CALL(m, modregrm(_,_,_,_)).Times(3);
         for (auto opcode:opcodes)
         {
             size_t offset = 0;
@@ -476,7 +476,7 @@ TEST(CallRegRm, test_call_regrmF6)
     
     {
         MockDisassm m;
-        EXPECT_CALL(m, modregrm(_,_,_)).Times(14);
+        EXPECT_CALL(m, modregrm(_,_,_,_)).Times(14);
         for (size_t tt = 0; tt < 8; tt++) {
             if (tt != 1) {
                 uint8_t code = 0x40 | (tt << 3);
@@ -528,7 +528,7 @@ TEST(CallRegRm, test_call_regrmFE)
     
     {
         MockDisassm m;
-        EXPECT_CALL(m, modregrm(_,_,_)).Times(2);
+        EXPECT_CALL(m, modregrm(_,_,_,_)).Times(2);
         {
             size_t offset = 0;
             bstring inp{0xFE, 0x0};
@@ -587,7 +587,7 @@ TEST(CallRegRm, test_call_regrmFF)
     
     {
         MockDisassm m;
-        EXPECT_CALL(m, modregrm(_,_,_)).Times(7);
+        EXPECT_CALL(m, modregrm(_,_,_,_)).Times(7);
         for (size_t tt = 0; tt < 7; tt++) {
             uint8_t code = 0x40 | (tt << 3);
             {
