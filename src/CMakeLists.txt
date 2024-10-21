@@ -1,7 +1,9 @@
 add_library(disassm
             opcode.cpp
             basetypes.cpp
-            disassm.cpp)
+            disassm.cpp
+            labels.cpp
+            rom.cpp)
 
 set_target_properties(disassm PROPERTIES LINKER_LANGUAGE CXX)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY lib)

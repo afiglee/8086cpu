@@ -16,6 +16,7 @@ using std::string_view;
 
 namespace sim86 {
 
+#define LJMP    0xEA
 
 class OpCode;
 typedef std::shared_ptr<OpCode>    pOpCode;
@@ -53,7 +54,7 @@ enum FLAG {
     FLAG_DF, //Direction
     FLAG_TF  //Trap
 };
-
+#if 0
 class CPU {
     public:
         CPU(enum FLAVOUR flavour);
@@ -61,18 +62,21 @@ class CPU {
     protected:
     enum FLAVOUR m_flavour;
 };
-
+#endif
 class OpCode {
     public:
         //OpCode(uint8_t code, enum DIALECT eDialect = INTEL);
         OpCode(bstring && bcode, enum DIALECT eDialect = INTEL);
 
    //     const string& mnemonic() const;
-        friend std::ostream& operator<<(std::ostream& os, const OpCode &oCode){
-            return os;
-        }
+        friend std::ostream& operator<<(std::ostream& os, const OpCode &oCode);
         const bstring &operands() const {return m_operands;}
+
+        static uint32_t calc_address(uint16_t segment, uint16_t offset);
+        ssize_t calc_new_address(uint32_t d_start, size_t offset);
+
     protected:
+        
   //      virtual pOpCode _get(const bin_string& inp, size_t& offset);
 
 //    string_view m_head;

@@ -1,4 +1,5 @@
 #include "opcode.h"
+#include "basetypes.h"
 
 #include <sstream>
 #include <memory>
@@ -16,6 +17,51 @@ OpCode::OpCode(bstring && bcode, enum DIALECT eDialect):
 {
 
 }
+
+std::ostream& operator<<(std::ostream& os, const OpCode &oCode)
+{
+    const uint8_t &code = oCode.m_operands[0];
+    switch(code) {
+        case LJMP: //long_jump
+        {
+            
+            uint16_t offset = TO_UINT16(oCode.m_operands[1], oCode.m_operands[2]);
+            uint16_t segm = TO_UINT16(oCode.m_operands[3], oCode.m_operands[4]);
+            uint32_t addr = OpCode::calc_address(segm, offset);
+            os << "ljmp ";
+            print20(os, addr);
+        }
+        break;
+        default: {
+            stringstream ss;
+            ss << "operator<< is missing for opcodes:";
+            for (auto code: oCode.m_operands) {
+                ss << " " << code;
+            }
+            throw sim86::unimplemented_exception(ss.str());
+        }
+        break;
+    }
+
+    return os;
+}
+
+uint32_t OpCode::calc_address(uint16_t segment, uint16_t offset) {
+    uint32_t ret = offset;
+    ret += (segment << 4);
+    return ret;
+}
+
+ssize_t OpCode::calc_new_address(uint32_t start, size_t offset) {
+    ssize_t new_offset = offset;
+    if (m_operands[0] == LJMP) {
+        //new_offset = calc_address(m_operands[4] << 8 | m_operands[3], m_operands[2] << 8 | m_operands[1]);
+        new_offset = calc_address(TO_UINT16(m_operands[3], m_operands[4]), TO_UINT16(m_operands[1], m_operands[2]));
+        new_offset -= start;
+    }
+    return new_offset;
+}
+
 #if 0
 OpCodeNA::OpCodeNA(bstring && bcode, enum DIALECT eDialect):
     OpCode(std::move(bcode), eDialect)

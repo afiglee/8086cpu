@@ -25,12 +25,12 @@ using std::setfill;
     ss << "Invalid code " << code << " " << code2 << " at " << offset;\
     throw invalid_argument(ss.str());\
 }
-
+/*
 ostream &operator<<(ostream& os, const uint8_t &u) {
     os << "0x" << setfill('0') << setw(2) << hex << (int) u;
     return os;
 }
-
+*/
 // 1 byte instructions:
 
 #define BAA     0x27
@@ -607,7 +607,7 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
             return modregrm(code, inp, offset);
         }    
         break;
-        case 0xEA:      //intersegment jump
+        case LJMP:      //intersegment jump
         case 0x9A:      //intersegment call
         {
             if ((offset + 3) >= inp.size()) {

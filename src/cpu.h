@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include "basetypes.h"
+#include "rom.h"
 
 namespace sim86 {
 class Reg final {
