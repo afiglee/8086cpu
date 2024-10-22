@@ -192,8 +192,10 @@ int main(int argc, char *argv[]) {
     try {
         while (1) {
             size_t old_offset = offset;
-            sim86::print16(std::cout, offset);
-            std::cout << " ";
+            if (ePrefix == sim86::PREFIX_DEFAULT) {
+                sim86::print16(std::cout, offset);
+                std::cout << " ";
+            }
             auto pCode = dis.decode(rom, offset, ePrefix);
             if (!rom.was_visited(old_offset, offset - old_offset)){
                 rom.mark_bits(old_offset, offset - old_offset);
@@ -202,7 +204,6 @@ int main(int argc, char *argv[]) {
                 ePrefix = pCode->prefix();
             } else {
                 ePrefix = sim86::PREFIX_DEFAULT;
-                
                 pCode->print(std::cout);
                 std::cout << "; " << pCode->operands();
 
