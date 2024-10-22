@@ -187,15 +187,6 @@ enum FLAG {
     FLAG_DF, //Direction
     FLAG_TF  //Trap
 };
-#if 0
-class CPU {
-    public:
-        CPU(enum FLAVOUR flavour);
-       // virtual void apply();//TODO
-    protected:
-    enum FLAVOUR m_flavour;
-};
-#endif
 class OpCode {
     public:
         //OpCode(uint8_t code, enum DIALECT eDialect = INTEL);
@@ -218,6 +209,7 @@ class OpCode {
         virtual bool isPrefix() const { return false;}
         virtual enum PREFIX prefix() const {return PREFIX_DEFAULT;}
     protected:
+        std::string decode_data() const;
         std::string decode_register_name() const;
         std::string decode_mod_rm() const;
   
@@ -281,86 +273,6 @@ public:
     protected:
         uint16_t m_own_address;
 };
-
-#if 0
-class OpCodeNA : public OpCode {
-    public:    
-        OpCodeNA(uint8_t code, enum DIALECT eDialect = INTEL);
-        OpCodeNA(bstring &&bcode, enum DIALECT eDialect = INTEL);
-
-};
-
-class OpCodeTwo : public OpCode {
-    public:
- //       OpCodeTwo(uint8_t code, uint8_t code2);
-        OpcodeTwo(bstring && bcode, enum DIALECT eDialect = INTEL);
-};
-
-class OpCodeRelJump: public OpCodeTwo {
-    public:
-        OpCodeRelJump(const char *head, uint8_t code, uint8_t code2);
-
-    protected:
-        virtual void readOperand([[maybe_unused]] size_t offset) override;  
-};
-
-
-class OpCodeThree : public OpCode {
-    public:
-        OpCodeThree(bstring && bcode, enum DIALECT eDialect = INTEL);
-         
-};
-
-class AriphmeticOpCode: public OpCode {
-    public:
-        AriphmeticOpCode(const char* head, uint8_t code);
-
-    protected:
-        void readOperands(const bin_string& inp, size_t& offset);
-};
-
-class OpCode0 : public AriphmeticOpCode 
-{
-    public:
-        OpCode0(const char* head, uint8_t code);
-    protected:
-        virtual pOpCode _get(const bin_string& inp, size_t& offset) override;
-};
-
-class OpCode1 : public AriphmeticOpCode 
-{
-    public:
-        OpCode1(const char* head, uint8_t code);
-    protected:
-        virtual pOpCode _get(const bin_string& inp, size_t& offset) override;
-
-};
-
-class OpCode2 : public AriphmeticOpCode 
-{
-    public:
-        OpCode2(const char* head, uint8_t code);
-    protected:
-        virtual pOpCode _get(const bin_string& inp, size_t& offset) override;
-
-};
-
-class OpCode3 : public AriphmeticOpCode 
-{
-    public:
-        OpCode3(const char* head, uint8_t code);
-    protected:
-        virtual pOpCode _get(const bin_string& inp, size_t& offset) override;
-
-};
-
-class OpCodeMulti :public OpCode {
-    public:
-        OpCodeMulti(uint8_t code);
-    protected:
-        virtual pOpCode _get(const bin_string& inp, size_t& offset) override;
-};
-#endif
 
 }
 

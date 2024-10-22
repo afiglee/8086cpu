@@ -212,6 +212,7 @@ int main(int argc, char *argv[]) {
             }
             size_t next_offset = rom.get_next_offset(pCode, offset);
             if (next_offset != offset) {
+                std::cout << "NEW_OFFSET(" << next_offset <<") old_offset=" << offset;
                 labels.get_label(next_offset);
             }
             //TODO - adjust for subroutines
