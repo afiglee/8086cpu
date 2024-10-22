@@ -21,7 +21,7 @@ OpCode::OpCode(bstring && bcode, bool byte_operands, enum DIALECT eDialect):
 std::ostream& operator<<(std::ostream& os, const OpCode &oCode)
 {
     const uint8_t &code = oCode.m_operands[0];
-    os << (oCode.m_byte_operands?"b ":"w ");
+    //os << (oCode.m_byte_operands?"b ":"w ");
     switch (code & 0xF0) {
         default:
             break;
@@ -77,23 +77,98 @@ std::ostream& operator<<(std::ostream& os, const OpCode &oCode)
             }
         }
         return os;
+        case XOR_DW_MASK:
+        {
+            os << "xor " << oCode.decode_dw_mod_rm();
+        }
+        return os;
+        case OR_DW_MASK:
+        {
+            os << "or " << oCode.decode_dw_mod_rm();
+        }
+        return os;        
+        case MOV_2R_MASK:
+        {
+            os << "mov " << oCode.decode_dw_mod_rm();
+        }
+        return os;
+        default:
+            break;
+    }
+    switch (code & 0xFE) {
+        case OUT_MASK:
+        {
+            os << "out " << oCode.m_operands[1] << ", " << oCode.decode_register_name();
+        }
+        return os;
+        case OUT_MASK_REG:
+        {
+            os << "out dx, " << (oCode.m_byte_operands?"al":"ax");
+        }
+        return os;
         default:
             break;
     }
     switch(code) {
-        case LAHF:
+        case BAA: os << "baa"; break;
+        case DAS: os << "das"; break;
+        case AAA: os << "aaa"; break;
+        case AAS: os << "aas"; break;
+        case INC_AX: os << "inc ax"; break;
+        case INC_CX: os << "inc cx"; break;
+        case INC_DX: os << "inc dx"; break;
+        case INC_BX: os << "inc bx"; break;
+        case INC_SP: os << "inc sp"; break;
+        case INC_BP: os << "inc bp"; break;
+        case INC_SI: os << "inc si"; break;
+        case INC_DI: os << "inc di"; break;
+        case DEC_AX: os << "dec ax"; break;
+        case DEC_CX: os << "dec cx"; break;
+        case DEC_DX: os << "dec dx"; break;
+        case DEC_BX: os << "dec bx"; break;
+        case DEC_SP: os << "dec sp"; break;
+        case DEC_BP: os << "dec bp"; break;
+        case DEC_SI: os << "dec si"; break;
+        case DEC_DI: os << "dec di"; break;
+        case CBW: os << "cbw"; break;
+        case CWD: os << "cwd"; break;
+        case WAIT: os << "wait"; break;
+        case MOVS: os << "movs"; break;
+        case MOVSW: os << "movsw"; break;
+        case CMPS: os << "cmps"; break;
+        case CMPSW: os << "cmpsw"; break;
+        case STOS: os << "stos"; break;
+        case STOSW: os << "stosw"; break;
+        case LODS: os << "lods"; break;
+        case LODSW: os << "lodsw"; break;
+        case SCAS: os << "scas"; break;
+        case SCASW: os << "scasw"; break;
+        case RET: os << "ret"; break;        
+        case INT: os << "int3"; break;    //Type 3
+        case INTO: os << "int"; break;
+        case IRET: os << "iret"; break;
+        case LOCK: os << "lock"; break;
+        case REP: os << "rep"; break;
+        case REPZ: os << "repz"; break;
+        case HLT: os << "hlt"; break;
+        case CMC: os << "cmc"; break;
+        case CLC: os << "clc"; break;
+        case STC: os << "stc"; break;
+        case CLI: os << "cli"; break;
+        case STI: os << "sti"; break;
+        case CLD: os << "cld"; break;
+        case STD: os << "std"; break;
+        case LAHF: os << "lahf"; break;
+        case SAHF: os << "sahf"; break;
+        case RETF: os << "retf"; break;
+        case MOV_R2SEG:
         {
-            os << "lahf";
+            os << "mov " << OpCode::get_segregister_name(oCode.m_operands[1] >> 3) << ", " << oCode.decode_mod_rm();
         }
         break;
-        case RET:
+        case MOV_SEG2R:
         {
-            os << "ret";
-        }
-        break;
-        case RETF:
-        {
-            os << "retf";
+            os << "mov " << oCode.decode_mod_rm() << ", " << OpCode::get_segregister_name(oCode.m_operands[1] >> 3);
         }
         break;
         case LJMP: //long_jump
@@ -106,16 +181,7 @@ std::ostream& operator<<(std::ostream& os, const OpCode &oCode)
             print20(os, addr);
         }
         break;
-        case CLI:
-        {
-            os << "cli";
-        }
-        break;
-        case SAHF:
-        {
-            os << "sahf";
-        }
-        break;
+        
         default:
         {
             stringstream ss;
@@ -206,6 +272,30 @@ std::ostream& operator<<(std::ostream& os, const AddressedOpCode &oCode)
     }
     throw sim86::unimplemented_exception(ss.str());
 
+}
+
+string OpCode::decode_dw_mod_rm() const
+{
+    string ret;
+    if (m_operands[0] & 0x02) {
+        ret = decode_register_name();
+        ret += ", ";
+        ret += decode_mod_rm();
+    } else {
+        ret = decode_mod_rm();
+        ret += ", ";
+        ret += decode_register_name();
+    }
+    return ret;
+}
+
+string OpCode::decode_register_name() const
+{
+    if (m_byte_operands) {
+        return get_register8_name(m_operands[1] >> 3);
+    } else {
+        return get_register16_name(m_operands[1] >> 3);
+    }
 }
 
 string OpCode::decode_mod_rm() const
@@ -336,6 +426,20 @@ std::string OpCode::get_register16_name(uint8_t reg)
             return "di";
     }
 
+}
+
+std::string OpCode::get_segregister_name(uint8_t reg)
+{
+    switch (reg & 0x03) {
+        case 0:
+            return "es";
+        case 1:
+            return "cs";
+        case 2:
+            return "ss";
+        default:
+            return "ds";    
+    }
 }
 
 uint32_t OpCode::calc_address(uint16_t segment, uint16_t offset) {

@@ -31,89 +31,6 @@ ostream &operator<<(ostream& os, const uint8_t &u) {
     return os;
 }
 */
-// 1 byte instructions:
-
-#define BAA     0x27
-#define DAS     0x2F
-#define AAA     0x37
-#define AAS     0x3F
-#define INC_AX  0x40
-#define INC_CX  0x41
-#define INC_DX  0x42
-#define INC_BX  0x43
-#define INC_SP  0x44
-#define INC_BP  0x45
-#define INC_SI  0x46
-#define INC_DI  0x47
-#define DEC_AX  0x48
-#define DEC_CX  0x49
-#define DEC_DX  0x4A
-#define DEC_BX  0x4B
-#define DEC_SP  0x4C
-#define DEC_BP  0x4D
-#define DEC_SI  0x4E
-#define DEC_DI  0x4F
-
-#define CBW     0x98
-#define CWD     0x99
-#define WAIT    0x9B
-#define MOVS    0xA4
-#define MOVSW   0xA5
-#define CMPS    0xA6
-#define CMPSW   0xA7
-
-#define STOS    0xAA
-#define STOSW   0xAB
-#define LODS    0xAC
-#define LODSW   0xAD
-#define SCAS    0xAE
-#define SCASW   0xAF
-
-#define RET     0xC3
-#define RETL    0xCB
-
-#define INT     0xCC    //Type 3
-#define INTO    0xCE
-#define IRET    0xCF
-
-#define LOCK    0xF0
-#define REP     0xF2
-#define REPZ    0xF3
-
-
-#define HLT     0xF4
-#define CMC     0xF5
-
-#define CLC     0xF8
-#define STC     0xF9
-#define CLI     0xFA
-#define STI     0xFB
-#define CLD     0xFC
-#define STD     0xFD
-
-// 2 bytes instruction
-
-
-//Complex size
-#define ADD_DW_MASK 0x00
-#define ADC_DW_MASK 0x10
-#define SUB_DW_MASK 0x28
-#define SSB_DW_MASK 0x18
-#define CMP_DW_MASK 0x38
-#define AND_DW_MASK 0x20
-#define TEST_DW_MASK    0x84 //no w
-#define OR_DW_MASK  0x08
-#define XOR_DW_MASK 0x30
-
-#define ADD_IA_MASK 0x04
-#define ADC_IA_MASK 0x14
-#define SUB_IA_MASK 0x2C
-#define SSB_IA_MASK 0x1C
-#define CMP_IA_MASK 0x3C
-#define AND_IA_MASK 0x24
-#define TEST_IA_MASK    0xA8 //no w
-#define OR_IA_MASK  0x0C
-#define XOR_IA_MASK 0x34
 
 
 
@@ -531,7 +448,7 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
         case 0xAE:
             byte_operands = true;
     }
-    std::cout << "\tENTER=" << code << " offset=" << offset << std::endl;
+    //std::cout << "\tENTER=" << code << " offset=" << offset << std::endl;
     switch (code) {  
         case 0x06:
         case 0x07:
@@ -575,7 +492,7 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
         case SCAS:    //0xAE
         case SCASW:   //0xAF
         case RET:     //0xC3
-        case RETL:    //0xCB
+        case RETF:    //0xCB
         case INT:     //0xCC    //Type 3
         case INTO:    //0xCE
         case IRET:    //0xCF
@@ -781,7 +698,9 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
         case OR_DW_MASK:  //0x08
         case XOR_DW_MASK: //0x30
         {
-            std::cout << "GOT30 offset=" << offset << std::endl;
+           // std::cout << "GOT30 offset=";
+            print16(std::cout, offset);
+            std::cout << std::endl;
             if (offset >= inp.size()) {
                 throw out_of_range("at " + to_string(offset - 1));
             }
@@ -790,7 +709,7 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
                 THROW_INVALID(offset - 1, code, code2);
                 //return shared_ptr<OpCode>(new OpCodeNA(bstring{code, code2}));
             }
-            std::cout << "HERE" << std::hex << (int) code << std::endl;
+        //    std::cout << "HERE" << std::hex << (int) code << std::endl;
             return modregrm(code, inp, offset, byte_operands);
         }
         case 0xE0:

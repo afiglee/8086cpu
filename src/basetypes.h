@@ -38,8 +38,8 @@ public:
     bstring(uint8_t code, uint8_t code1, uint8_t code2, uint8_t code3, uint8_t code4);
     bstring(uint8_t *data, size_t size);
     friend std::ostream& operator<<(std::ostream &os, const bstring& bstr) {
-        for (auto ch:bstr) {
-            std::cout << (char) ch;
+        for (auto u:bstr) {
+            std::cout << " " << u;
         }
         return os;
     }

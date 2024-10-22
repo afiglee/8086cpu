@@ -197,9 +197,12 @@ int main(int argc, char *argv[]) {
             }
 
             //std::cout << "Decoded :"; 
+            sim86::print16(std::cout, offset);
+            std::cout << " ";
             pCode->print(std::cout);
-            std::cout << "; offset=";
-            print20(std::cout, offset);
+            std::cout << "; " << pCode->operands();
+
+            //print20(std::cout, offset);
             std::cout << std::endl;
             size_t next_offset = rom.get_next_offset(pCode, offset);
             if (next_offset != offset) {
@@ -207,9 +210,9 @@ int main(int argc, char *argv[]) {
             }
             //TODO - adjust for subroutines
             offset = next_offset;
-            std::cout << "\tNext offset=";
-            print20(std::cout, offset);
-            std::cout << std::endl;
+            //std::cout << "\tNext offset=";
+            //print20(std::cout, offset);
+            //std::cout << std::endl;
         }
     } catch (std::invalid_argument & e) {
         std::cout << e.what();
