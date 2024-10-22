@@ -23,9 +23,10 @@ public:
       In case this is unknown 0x8088 opcode, exception
       of std::invalid_argument is thrown.
       */
-    virtual pOpCode decode(const bstring& inp, size_t& offset);    
+    virtual pOpCode decode(const bstring& inp, size_t& offset, enum PREFIX ePrefix = PREFIX_DEFAULT);    
 protected:
-    virtual pOpCode modregrm(const uint8_t &code, const bstring& inp, size_t& offset, bool byte_operands);
+    virtual pOpCode modregrm(const uint8_t &code, const bstring& inp, size_t& offset, 
+                        bool byte_operands, enum PREFIX ePrefix = PREFIX_DEFAULT);
    // pOpCode modrm(const uint8_t &code, bstring& inp, size_t& offset);
     enum FLAVOUR m_flavour;
     //array<shared_ptr<OpCode>, 256> m_opcodes;

@@ -34,6 +34,11 @@ namespace sim86 {
 #define JLE             0x7E      //JLE/JNG
 #define JG              0x7F      //JNLE/JG
 
+#define LOOPNZ          0xE0
+#define LOOPZ           0xE1
+#define LOOP            0xE2
+#define JCXZ            0xE3
+
 #define SAHF            0x9E
 #define LAHF            0x9F
 #define MOV_IRW_MASK3   0xB8 //MOV Immediate data to Word Register, 3 bit mask 0xF8
@@ -130,8 +135,10 @@ namespace sim86 {
 
 #define MOV_2R_MASK 0x88
 
+#define IN_MASK     0xE4
 #define OUT_MASK    0xE6
 #define JMP_SEG     0xE9
+#define IN_MASK_REG 0xEC
 #define OUT_MASK_REG 0xEE
 
 #define INC_MASK    0xFE
@@ -161,6 +168,14 @@ protected:
     T data;
 };
 
+enum PREFIX {
+    PREFIX_DEFAULT,
+    PREFIX_ES,
+    PREFIX_CS,
+    PREFIX_SS,
+    PREFIX_DS
+};
+
 enum FLAG {
     FLAG_CF, //Carry
     FLAG_PF, //Parity
@@ -184,12 +199,13 @@ class CPU {
 class OpCode {
     public:
         //OpCode(uint8_t code, enum DIALECT eDialect = INTEL);
-        OpCode(bstring && bcode, bool byte_operands, enum DIALECT eDialect = INTEL);
+        OpCode(bstring && bcode, bool byte_operands, enum PREFIX ePrefix = PREFIX_DEFAULT, DIALECT eDialect = INTEL);
 
         static uint32_t calc_address(uint16_t segment, uint16_t offset);
         static std::string get_register8_name(uint8_t reg);
         static std::string get_register16_name(uint8_t reg);
         static std::string get_segregister_name(uint8_t reg);
+        static uint16_t calc_disp(uint16_t addr, int8_t disp);
    //     const string& mnemonic() const;
         friend std::ostream& operator<<(std::ostream& os, const OpCode &oCode);
         const bstring &operands() const {return m_operands;}
@@ -198,30 +214,69 @@ class OpCode {
             return os << *this;
         }
         
-        ssize_t calc_new_address(uint32_t d_start, size_t offset);
-
+        virtual ssize_t calc_new_address(uint32_t d_start, size_t offset) const;
+        virtual bool isPrefix() const { return false;}
+        virtual enum PREFIX prefix() const {return PREFIX_DEFAULT;}
     protected:
         std::string decode_register_name() const;
         std::string decode_mod_rm() const;
   
     bstring m_operands;
     bool m_byte_operands;
+    enum PREFIX m_ePrefix;
     enum DIALECT m_eDialect;
+
+
+};
+
+class PrefixOpCode final : public OpCode {
+    public:
+        PrefixOpCode(uint8_t prefix): OpCode(bstring{prefix}, false) 
+        {}
+        bool isPrefix() const override {return true;}
+        enum PREFIX prefix() const override {
+            switch (m_operands[0]) {
+                case 0x26:
+                    return PREFIX_ES;
+                case 0x2E:
+                    return PREFIX_CS;
+                case 0x36:
+                    return PREFIX_SS;
+                case 0x3E:
+                    return PREFIX_DS;
+                default:
+                    return PREFIX_DEFAULT;
+            }
+        } 
 };
 
 // This class is used for relative jumps and takes offset address 
 // inside segment
 class AddressedOpCode : public OpCode {
 public:
-    AddressedOpCode(uint16_t own_address, uint8_t code, uint8_t offset, DIALECT eDialect = INTEL):
-        OpCode(bstring(code, offset), false, eDialect), m_own_address(own_address) {
-            if ((code & JXX_MASK4) != JXX_MASK4) {
+    AddressedOpCode(uint16_t own_address, uint8_t code, uint8_t offset, uint8_t offset_high, 
+                    enum PREFIX ePrefix = PREFIX_DEFAULT, DIALECT eDialect = INTEL):
+        OpCode(bstring{code, offset, offset_high}, false, ePrefix, eDialect), m_own_address(own_address) {
+            if ((code & 0xE8) != 0xE8) {
+                throw std::invalid_argument("Wrong opcode for AddressedOpCode");
+            }
+    }
+    AddressedOpCode(uint16_t own_address, uint8_t code, uint8_t offset, 
+                    enum PREFIX ePrefix = PREFIX_DEFAULT,DIALECT eDialect = INTEL):
+        OpCode(bstring(code, offset), false, ePrefix, eDialect), m_own_address(own_address) {
+            if ((code & JXX_MASK4) != JXX_MASK4 && (code & 0xFC) != 0xE0) {
                 throw std::invalid_argument("Wrong opcode for AddressedOpCode");
             }
     }
     std::ostream &print(std::ostream &os) override {
             return os << *this;
     }
+    ssize_t calc_new_address(uint32_t d_start, size_t offset) const override {
+        uint16_t go_to = m_own_address + (int16_t) TO_UINT16(m_operands[1], m_operands[2]) + 3;
+        //go_to += offset;
+        return go_to;
+    }
+
     friend std::ostream& operator<<(std::ostream& os, const AddressedOpCode &oCode);
     protected:
         uint16_t m_own_address;

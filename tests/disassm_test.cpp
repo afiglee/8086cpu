@@ -185,7 +185,7 @@ TEST(CallRegRm, test_call_regrmXXX)
     
 
     MockDisassm m;
-    EXPECT_CALL(m, modregrm(_,_,_,_)).Times(42+9);
+    EXPECT_CALL(m, modregrm(_,_,_,_,_)).Times(42+9);
     for (auto code:codes) {
         size_t offset = 0;
         bstring inp{code, 0x00};
@@ -218,7 +218,7 @@ TEST(CallRegRm, test_call_regrm_rotate)
 
     {
         MockDisassm m;
-        EXPECT_CALL(m, modregrm(_,_,_,_)).Times(28);
+        EXPECT_CALL(m, modregrm(_,_,_,_,_)).Times(28);
         for (auto code:codes) {
             for (size_t tt = 0; tt < 8; tt++) {
                 if (tt != 6) {
@@ -266,7 +266,7 @@ TEST(CallRegRm, test_call_regrm80)
     
     {
         MockDisassm m;
-        EXPECT_CALL(m, modregrm(_,_,_,_)).Times(14);
+        EXPECT_CALL(m, modregrm(_,_,_,_,_)).Times(14);
         for (size_t tt = 0; tt < 8; tt++) {
             if (tt != 4) {
                 uint8_t code = 0x40 | (tt << 3);
@@ -325,7 +325,7 @@ TEST(CallRegRm, test_call_regrm82)
     
     {
         MockDisassm m;
-        EXPECT_CALL(m, modregrm(_,_,_,_)).Times(10);
+        EXPECT_CALL(m, modregrm(_,_,_,_,_)).Times(10);
         for (size_t tt = 0; tt < 8; tt++) {
             switch (tt) {
                 case 0:
@@ -398,7 +398,7 @@ TEST(CallRegRm, test_call_regrm8C)
     };
     {
         MockDisassm m;
-        EXPECT_CALL(m, modregrm(_,_,_,_)).Times(8);
+        EXPECT_CALL(m, modregrm(_,_,_,_,_)).Times(8);
         for (auto opcode: opcodes)
         {
             for (uint8_t tt = 0; tt < 4; tt++)
@@ -450,7 +450,7 @@ TEST(CallRegRm, test_call_regrm8F)
     {
         MockDisassm m;
         
-        EXPECT_CALL(m, modregrm(_,_,_,_)).Times(3);
+        EXPECT_CALL(m, modregrm(_,_,_,_,_)).Times(3);
         for (auto opcode:opcodes)
         {
             size_t offset = 0;
@@ -476,7 +476,7 @@ TEST(CallRegRm, test_call_regrmF6)
     
     {
         MockDisassm m;
-        EXPECT_CALL(m, modregrm(_,_,_,_)).Times(14);
+        EXPECT_CALL(m, modregrm(_,_,_,_,_)).Times(14);
         for (size_t tt = 0; tt < 8; tt++) {
             if (tt != 1) {
                 uint8_t code = 0x40 | (tt << 3);
@@ -528,7 +528,7 @@ TEST(CallRegRm, test_call_regrmFE)
     
     {
         MockDisassm m;
-        EXPECT_CALL(m, modregrm(_,_,_,_)).Times(2);
+        EXPECT_CALL(m, modregrm(_,_,_,_,_)).Times(2);
         {
             size_t offset = 0;
             bstring inp{0xFE, 0x0};
@@ -587,7 +587,7 @@ TEST(CallRegRm, test_call_regrmFF)
     
     {
         MockDisassm m;
-        EXPECT_CALL(m, modregrm(_,_,_,_)).Times(7);
+        EXPECT_CALL(m, modregrm(_,_,_,_,_)).Times(7);
         for (size_t tt = 0; tt < 7; tt++) {
             uint8_t code = 0x40 | (tt << 3);
             {

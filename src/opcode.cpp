@@ -12,8 +12,9 @@ using std::make_shared;
 using std::stringstream;
 namespace sim86{
 
-OpCode::OpCode(bstring && bcode, bool byte_operands, enum DIALECT eDialect):
-    m_operands{std::move(bcode)}, m_byte_operands{byte_operands}, m_eDialect{eDialect}
+OpCode::OpCode(bstring && bcode, bool byte_operands, enum PREFIX prefix, enum DIALECT eDialect):
+    m_operands{std::move(bcode)}, m_byte_operands{byte_operands}, 
+    m_ePrefix(prefix), m_eDialect{eDialect}
 {
 
 }
@@ -90,6 +91,16 @@ std::ostream& operator<<(std::ostream& os, const OpCode &oCode)
             break;
     }
     switch (code & 0xFE) {
+        case IN_MASK:
+        {
+            os << "in " << (oCode.m_byte_operands?"al":"ax") << ", " << oCode.m_operands[1];
+        }
+        return os;
+        case IN_MASK_REG:
+        {
+            os << "in " << (oCode.m_byte_operands?"al":"ax") << ", dx";
+        }
+        return os;        
         case OUT_MASK:
         {
             os << "out " << oCode.m_operands[1] << ", " << (oCode.m_byte_operands?"al":"ax");
@@ -180,11 +191,6 @@ std::ostream& operator<<(std::ostream& os, const OpCode &oCode)
             print20(os, addr);
         }
         break;
-        case JMP_SEG:
-        {
-            os << "jmp ";
-        }
-        break;
         default:
         {
             stringstream ss;
@@ -253,23 +259,42 @@ std::ostream& operator<<(std::ostream& os, const AddressedOpCode &oCode)
                     break;
                 case JLE:
                     os << "jle";
-                    break;
-                default:    
+                    break; 
+                default:   
                 case JG:
                     os << "jg";
                     break;
+
             }
-            uint16_t goto_address = oCode.m_own_address +2;
-            goto_address += (int8_t) oCode.m_operands[1];
+            /*uint16_t goto_address = oCode.m_own_address +2;
+            goto_address += (int8_t) oCode.m_operands[1];*/
             os << " ";
-            print16(os, goto_address);
+            print16(os, OpCode::calc_disp(oCode.m_own_address, (int8_t) oCode.m_operands[1]));
         }
         return os;
         default:
             break;
     }
+    switch (code) {
+        case JMP_SEG:
+        {
+            os << "jmp ";
+            uint16_t goto_address = oCode.m_own_address + 3;
+            goto_address += (int16_t) TO_UINT16(oCode.m_operands[1], oCode.m_operands[2]);
+            os << " ";
+            print16(os, goto_address);
+            return os;
+        }
+        case LOOPNZ: os << "loopnz "; print16(os, OpCode::calc_disp(oCode.m_own_address, (int8_t) oCode.m_operands[1])); return os;
+        case LOOPZ:  os << "loopz "; print16(os, OpCode::calc_disp(oCode.m_own_address, (int8_t) oCode.m_operands[1])); return os;
+        case LOOP:   os << "loop "; print16(os, OpCode::calc_disp(oCode.m_own_address, (int8_t) oCode.m_operands[1])); return os;
+        case JCXZ:   os << "jcxz "; print16(os, OpCode::calc_disp(oCode.m_own_address, (int8_t) oCode.m_operands[1])); return os;
+
+        default:
+            break;        
+    }
     stringstream ss;
-    ss << "operator<< is missing for opcodes:";
+    ss << "operator << is missing for opcodes:";
     for (auto code: oCode.m_operands) {
         ss << " " << code;
     }
@@ -292,6 +317,12 @@ string OpCode::decode_dw_mod_rm() const
     return ret;
 }
 
+uint16_t OpCode::calc_disp(uint16_t addr, int8_t disp) {
+    uint16_t goto_address = addr + 2;
+    goto_address += disp;
+    return goto_address;
+}
+
 string OpCode::decode_register_name() const
 {
     if (m_byte_operands) {
@@ -307,7 +338,15 @@ string OpCode::decode_mod_rm() const
     stringstream ss;
     //ss << m_operands[0] << " " << m_operands[1] << " ";
     if (sw != 0xC0) {
-        ss << (m_byte_operands?"byte ptr [":"word ptr [");
+        
+        switch (m_ePrefix) {
+            case PREFIX_CS: ss << (m_byte_operands?"byte ptr cs:[":"word ptr ["); break;
+            case PREFIX_DS: ss << (m_byte_operands?"byte ptr ds:[":"word ptr ["); break;
+            case PREFIX_ES: ss << (m_byte_operands?"byte ptr es:[":"word ptr ["); break;
+            case PREFIX_SS: ss << (m_byte_operands?"byte ptr ss:[":"word ptr ["); break;
+            default:
+                ss << (m_byte_operands?"byte ptr [":"word ptr [");
+        }
         switch (m_operands[1] & 0x07) {
             case 0:
                 ss << "bx + si";
@@ -341,7 +380,7 @@ string OpCode::decode_mod_rm() const
             } else {
                 ss << " " << m_operands[2];
             }
-        } else /*0x80*/{
+        } else if (sw == 0x80) {
             uint16_t op = TO_UINT16(m_operands[2], m_operands[3]);
             if (op & 0x8000) {
                 op &= 0x7FFF;
@@ -451,7 +490,7 @@ uint32_t OpCode::calc_address(uint16_t segment, uint16_t offset) {
     return ret;
 }
 
-ssize_t OpCode::calc_new_address(uint32_t start, size_t offset) {
+ssize_t OpCode::calc_new_address(uint32_t start, size_t offset) const {
     ssize_t new_offset = offset;
     if (m_operands[0] == LJMP) {
         //new_offset = calc_address(m_operands[4] << 8 | m_operands[3], m_operands[2] << 8 | m_operands[1]);

@@ -326,7 +326,8 @@ pOpCode Disassm::modrm(const uint8_t &code, bstring& inp, size_t& offset){
 
 }*/
 
-pOpCode Disassm::modregrm(const uint8_t &code, const bstring& inp, size_t& offset, bool byte_operands) {
+pOpCode Disassm::modregrm(const uint8_t &code, const bstring& inp, size_t& offset, 
+                            bool byte_operands, enum PREFIX ePrefix) {
     if (offset >= inp.size()) {
         throw out_of_range("at " + to_string(offset - 1));
     }
@@ -373,12 +374,12 @@ pOpCode Disassm::modregrm(const uint8_t &code, const bstring& inp, size_t& offse
                 throw out_of_range("0x40: at " + to_string(offset - 2));
             }
             const uint8_t &code3 = inp[offset++];
-            return shared_ptr<OpCode>(new OpCode(bstring{code, code2, code3}, byte_operands));
+            return shared_ptr<OpCode>(new OpCode(bstring{code, code2, code3}, byte_operands, ePrefix));
         }
         case 0xC0:
         case 0x00:
             if (code2 != 06) {
-                return shared_ptr<OpCode>(new OpCode(bstring{code, code2}, byte_operands));
+                return shared_ptr<OpCode>(new OpCode(bstring{code, code2}, byte_operands, ePrefix));
             }
             // no break: if code2 == 06 - fell through to 0x80 handler
         case 0x80:
@@ -388,12 +389,12 @@ pOpCode Disassm::modregrm(const uint8_t &code, const bstring& inp, size_t& offse
             }
             const uint8_t &code3 = inp[offset++];
             const uint8_t &code4 = inp[offset++];
-            return shared_ptr<OpCode>(new OpCode(bstring{code, code2, code3, code4}, byte_operands));
+            return shared_ptr<OpCode>(new OpCode(bstring{code, code2, code3, code4}, byte_operands, ePrefix));
     }
 
 }
 
-pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
+pOpCode Disassm::decode(const bstring& inp, size_t& offset, enum PREFIX ePrefix) {
     if (offset >= inp.size()) {
         throw out_of_range("at " + to_string(offset));
     }
@@ -449,7 +450,13 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
             byte_operands = true;
     }
     //std::cout << "\tENTER=" << code << " offset=" << offset << std::endl;
-    switch (code) {  
+    switch (code) { 
+        case 0x26:
+        case 0x2E:
+        case 0x36:
+        case 0x3E:
+            return shared_ptr<PrefixOpCode>(new PrefixOpCode{code});
+//        case 0x86:
         case 0x06:
         case 0x07:
         case 0x0E:
@@ -512,7 +519,7 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
         case STI:     //0xFB
         case CLD:     //0xFC
         case STD:     //0xFD
-            return shared_ptr<OpCode>(new OpCode{bstring{code}, byte_operands});
+            return shared_ptr<OpCode>(new OpCode{bstring{code}, byte_operands, ePrefix});
         case 0x86:
         case 0x87:
         case 0x8D:
@@ -522,7 +529,7 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
             if (offset >= inp.size()) {
                 throw out_of_range("at " + to_string(offset - 1));
             }
-            return modregrm(code, inp, offset, byte_operands);
+            return modregrm(code, inp, offset, byte_operands, ePrefix);
         }
         case 0x8C:
         case 0x8E:
@@ -534,7 +541,7 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
             if (code2 & 0x20) {
                 THROW_INVALID(offset - 1, code, code2);
             }
-            return modregrm(code, inp, offset, byte_operands);
+            return modregrm(code, inp, offset, byte_operands, ePrefix);
         }
         break;
         case 0x8F:
@@ -544,7 +551,7 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
             }
             const uint8_t &code2 = inp[offset];
             if ((code2 & 0x38) == 0) {
-                return modregrm(code, inp, offset, byte_operands);
+                return modregrm(code, inp, offset, byte_operands, ePrefix);
             }
             THROW_INVALID(offset - 1, code, code2);
         }
@@ -556,7 +563,7 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
             const uint8_t &code2 = inp[offset];
             if ((code2 & 0x38) == 0x00 ||
                 (code2 & 0x38) == 0x08) {
-                return modregrm(code, inp, offset, byte_operands);
+                return modregrm(code, inp, offset, byte_operands, ePrefix);
             } else {
                 THROW_INVALID(offset - 1, code, code2);
             }
@@ -575,7 +582,7 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
                 THROW_INVALID(offset - 1, code, code2);
             }
             std::cout << "HERE" << std::hex << (int) code << std::endl;
-            return modregrm(code, inp, offset, byte_operands);
+            return modregrm(code, inp, offset, byte_operands, ePrefix);
         }    
         break;
         case LJMP:      //intersegment jump
@@ -588,9 +595,14 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
             const uint8_t &code3 = inp[offset++];
             const uint8_t &code4 = inp[offset++];
             const uint8_t &code5 = inp[offset++];
-            return shared_ptr<OpCode>(new OpCode{bstring{code, code2, code3, code4, code5}, byte_operands});
+            return shared_ptr<OpCode>(new OpCode{bstring{code, code2, code3, code4, code5}, byte_operands, ePrefix});
         }
         break;
+        case 0xE0: //loop
+        case 0xE1: //loop
+        case 0xE2: //loop
+        case 0xE3: //loop
+
         case 0x70:      //JO
         case 0x71:      //JNO
         case 0x72:      //JB/JNAE
@@ -613,8 +625,9 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
             }
             const uint8_t &code2 = inp[offset++];
             uint16_t addr = (uint16_t) (offset - 2);
-            return shared_ptr<AddressedOpCode>(new AddressedOpCode{addr, code, code2});
+            return shared_ptr<AddressedOpCode>(new AddressedOpCode{addr, code, code2, ePrefix});
         }
+
         case 0xCD:      //int x
         case 0xEB:      //jmp
         case 0xD5:      // 0xD5/0xD4 0x0A
@@ -632,7 +645,7 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
             if ((code == 0xD4 || code == 0xD5) && (code2 != 0x0A)){
                 THROW_INVALID(offset - 1, code, code2);
             }
-            return shared_ptr<OpCode>(new OpCode{bstring{code, code2}, byte_operands});
+            return shared_ptr<OpCode>(new OpCode{bstring{code, code2}, byte_operands, ePrefix});
         }    
         default:
         break;
@@ -645,7 +658,7 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
                 throw out_of_range("at " + to_string(offset - 1));
             }
             const uint8_t &code2 = inp[offset++];
-            return shared_ptr<OpCode>(new OpCode{bstring{code, code2}, byte_operands});
+            return shared_ptr<OpCode>(new OpCode{bstring{code, code2}, byte_operands, ePrefix});
         }
         case 0xB8:
         case 0xBC:
@@ -655,7 +668,7 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
             }
             const uint8_t &code2 = inp[offset++];
             const uint8_t &code3 = inp[offset++];
-            return shared_ptr<OpCode>(new OpCode{bstring{code, code2, code3}, byte_operands});
+            return shared_ptr<OpCode>(new OpCode{bstring{code, code2, code3}, byte_operands, ePrefix});
         }
         case 0x50:
         case 0x54:
@@ -664,13 +677,13 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
         case 0x90:
         case 0x94:
         case 0x9C:
-            return shared_ptr<OpCode>(new OpCode{bstring{code}, byte_operands});
+            return shared_ptr<OpCode>(new OpCode{bstring{code}, byte_operands, ePrefix});
         case 0x88:
         {
             if (offset >= inp.size()) {
                 throw out_of_range("at " + to_string(offset - 1));
             }
-            return modregrm(code, inp, offset, byte_operands);
+            return modregrm(code, inp, offset, byte_operands, ePrefix);
         }
         case 0xD0: //Rotate
         {
@@ -682,7 +695,7 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
                 THROW_INVALID(offset - 1, code, code2);
                 //return shared_ptr<OpCode>(new OpCodeNA(bstring{code, code2}));
             }
-            return modregrm(code, inp, offset, byte_operands);
+            return modregrm(code, inp, offset, byte_operands, ePrefix);
         }       
         case TEST_DW_MASK:    //0x84 //no w
             if ((0xFE & code) == 0x86) {
@@ -699,8 +712,8 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
         case XOR_DW_MASK: //0x30
         {
            // std::cout << "GOT30 offset=";
-            print16(std::cout, offset);
-            std::cout << std::endl;
+            //print16(std::cout, offset);
+            //std::cout << std::endl;
             if (offset >= inp.size()) {
                 throw out_of_range("at " + to_string(offset - 1));
             }
@@ -710,7 +723,7 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
                 //return shared_ptr<OpCode>(new OpCodeNA(bstring{code, code2}));
             }
         //    std::cout << "HERE" << std::hex << (int) code << std::endl;
-            return modregrm(code, inp, offset, byte_operands);
+            return modregrm(code, inp, offset, byte_operands, ePrefix);
         }
         case 0xE0:
             {
@@ -744,13 +757,21 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
                     throw out_of_range("at " + to_string(offset - 2));
                 }
                 const uint8_t &code3 = inp[offset++];
-                return shared_ptr<OpCode>(new OpCode{bstring{code, code2, code3}, byte_operands});
+                return shared_ptr<OpCode>(new OpCode{bstring{code, code2, code3}, byte_operands, ePrefix});
             } else {
-                return shared_ptr<OpCode>(new OpCode{bstring{code, code2}, byte_operands});
+                return shared_ptr<OpCode>(new OpCode{bstring{code, code2}, byte_operands, ePrefix});
             }            
         }
-        case 0xA0:
-        case 0xA2:
+        case 0xA0: //mov
+        case 0xA2: //mov
+        {
+            if ((offset + 1) >= inp.size()) {
+                throw out_of_range("at " + to_string(offset - 1));
+            }
+            const uint8_t &code2 = inp[offset++];
+            const uint8_t &code3 = inp[offset++];
+            return shared_ptr<OpCode>(new OpCode{bstring{code, code2, code3}, byte_operands, ePrefix});
+        }        
         case 0xE8:          // jmp or call
         {
             if ((offset + 1) >= inp.size()) {
@@ -758,7 +779,7 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
             }
             const uint8_t &code2 = inp[offset++];
             const uint8_t &code3 = inp[offset++];
-            return shared_ptr<OpCode>(new OpCode{bstring{code, code2, code3}, byte_operands});
+            return shared_ptr<AddressedOpCode>(new AddressedOpCode(offset - 3, code, code2, code3, ePrefix));
         }
         case 0x80:
         {
@@ -769,7 +790,7 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
             if ((code2 & 0x38) == 0x20) {
                 THROW_INVALID(offset - 1, code, code2);
             }
-            return modregrm(code, inp, offset, byte_operands); 
+            return modregrm(code, inp, offset, byte_operands, ePrefix); 
         }
         break;
         case 0x82:
@@ -785,7 +806,7 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
                 case 0x30:
                     THROW_INVALID(offset - 1, code, code2);
                 default:    
-                    return modregrm(code, inp, offset, byte_operands);
+                    return modregrm(code, inp, offset, byte_operands, ePrefix);
             }
         }
         break;
@@ -796,7 +817,7 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
             }
             const uint8_t &code2 = inp[offset];
             if ((code2 & 0x38) == 0) {
-                return modregrm(code, inp, offset, byte_operands);
+                return modregrm(code, inp, offset, byte_operands, ePrefix);
             }
             THROW_INVALID(offset - 1, code, code2);
         }
@@ -811,7 +832,7 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
                 //return shared_ptr<OpCode>(new OpCodeNA(bstring{code, code2}));
             }
             std::cout << "HERE" << std::hex << (int) code << std::endl;
-            return modregrm(code, inp, offset, byte_operands);
+            return modregrm(code, inp, offset, byte_operands, ePrefix);
         }
         break;
     }
@@ -820,7 +841,7 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
         if (offset >= inp.size()) {
             throw out_of_range("at " + to_string(offset));
         }
-        return modregrm(code, inp, offset, byte_operands);
+        return modregrm(code, inp, offset, byte_operands, ePrefix);
     }
     if ((code & 0xF7) == 0xC2) { // variants of RET
         if ((offset + 1) >= inp.size()) {
@@ -828,10 +849,10 @@ pOpCode Disassm::decode(const bstring& inp, size_t& offset) {
         }
         const uint8_t &code2 = inp[offset++];
         const uint8_t &code3 = inp[offset++];
-        return shared_ptr<OpCode>(new OpCode{bstring{code, code2, code3}, byte_operands});
+        return shared_ptr<OpCode>(new OpCode{bstring{code, code2, code3}, byte_operands, ePrefix});
     }
     stringstream ss;
-    ss << "AT THE END offset=" << offset << " code=" << code;
+    ss << "AT THE END offset=" << (offset-1) << " code=" << code;
     throw out_of_range(ss.str());
 }
 

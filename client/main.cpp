@@ -188,20 +188,27 @@ int main(int argc, char *argv[]) {
 
     sim86::Disassm dis;
     sim86::LabelMap labels;
+    enum sim86::PREFIX ePrefix = sim86::PREFIX_DEFAULT;
     try {
         while (1) {
             size_t old_offset = offset;
             sim86::print16(std::cout, offset);
             std::cout << " ";
-            auto pCode = dis.decode(rom, offset);
+            auto pCode = dis.decode(rom, offset, ePrefix);
             if (!rom.was_visited(old_offset, offset - old_offset)){
                 rom.mark_bits(old_offset, offset - old_offset);
             }
-            pCode->print(std::cout);
-            std::cout << "; " << pCode->operands();
+            if (pCode->isPrefix()) {
+                ePrefix = pCode->prefix();
+            } else {
+                ePrefix = sim86::PREFIX_DEFAULT;
+                
+                pCode->print(std::cout);
+                std::cout << "; " << pCode->operands();
 
-            //print20(std::cout, offset);
-            std::cout << std::endl;
+                //print20(std::cout, offset);
+                std::cout << std::endl;
+            }
             size_t next_offset = rom.get_next_offset(pCode, offset);
             if (next_offset != offset) {
                 labels.get_label(next_offset);
