@@ -21,6 +21,7 @@ OpCode::OpCode(bstring && bcode, bool byte_operands, enum DIALECT eDialect):
 std::ostream& operator<<(std::ostream& os, const OpCode &oCode)
 {
     const uint8_t &code = oCode.m_operands[0];
+    os << (oCode.m_byte_operands?"b ":"w ");
     switch (code & 0xF0) {
         default:
             break;
@@ -39,7 +40,46 @@ std::ostream& operator<<(std::ostream& os, const OpCode &oCode)
         default:
             break;
     }
-
+    switch (code & 0xFC) {
+        case ROT_MASK2:
+        {
+            switch (oCode.m_operands[1] & 0x38) {
+                case 0:
+                    os << "rol ";
+                    break;
+                case 0x08:
+                    os << "ror ";
+                    break;
+                case 0x10:
+                    os << "rcl ";
+                    break;
+                case 0x18:
+                    os << "rcr ";
+                    break;
+                case 0x20:
+                    os << "shl ";
+                    break;
+                case 0x28:
+                    os << "shr ";
+                    break;
+                case 0x30:
+                    os << "--- ";
+                    break;
+                default:
+                    os << "sar ";
+                    break;
+            }
+            os << oCode.decode_mod_rm();
+            if (code & 0x02) {
+                os << ", cl";
+            } else {
+                os << ", 1";
+            }
+        }
+        return os;
+        default:
+            break;
+    }
     switch(code) {
         case LAHF:
         {
@@ -168,22 +208,87 @@ std::ostream& operator<<(std::ostream& os, const AddressedOpCode &oCode)
 
 }
 
-std::string OpCode::decode_mod_rm() const
+string OpCode::decode_mod_rm() const
 {
-    switch (m_operands[1] & 0xC0) {
-        case 0x00:
-
-        break;
-        case 0x40:
-
-        break;
-        case 0x80:
-
-        break;
-        default: //0xC0
-            ;
+    uint8_t sw = m_operands[1] & 0xC0;
+    stringstream ss;
+    ss << m_operands[0] << " " << m_operands[1] << " ";
+    if (sw != 0xC0) {
+        ss << (m_byte_operands?"byte ptr [":"word ptr [");
+        switch (m_operands[1] & 0x07) {
+            case 0:
+                ss << "bx + si";
+                break;
+            case 1:
+                ss << "bx + di";
+                break;
+            case 2:
+                ss << "bp + si";
+                break;
+            case 3:
+                ss << "bp + di";
+                break;
+            case 4:
+                ss << "si";
+                break;
+            case 5:
+                ss << "di";
+                break;
+            case 6:
+                ss << "bp";
+                break;
+            default:
+                ss << "bx";
+        }
+        if (sw == 0x40) {
+            if (m_operands[2] & 0x80) {
+                uint8_t op = m_operands[2] & 0x7F;
+                op = 0xFF - op + 1;
+                ss << " - " << op;
+            } else {
+                ss << " " << m_operands[2];
+            }
+        } else /*0x80*/{
+            uint16_t op = TO_UINT16(m_operands[2], m_operands[3]);
+            if (op & 0x8000) {
+                op &= 0x7FFF;
+                op = 0xFFFF - op + 1;
+                ss << " - ";
+                print16(ss, op);
+            } else {
+                ss << " " << op;
+            }
+        }
+        ss << "]";
+    } else { //0xC0 - regs
+        switch (m_operands[1] & 0x07) {
+            case 0:
+                ss << (m_byte_operands?"al":"ax");
+                break;
+            case 1:
+                ss << (m_byte_operands?"cl":"cx");
+                break;
+            case 2:
+                ss << (m_byte_operands?"dl":"dx");
+                break;
+            case 3:
+                ss << (m_byte_operands?"bl":"bx");
+                break;
+            case 4:
+                ss << (m_byte_operands?"ah":"sp");
+                break;
+            case 5:
+                ss << (m_byte_operands?"ch":"bp");
+                break;
+            case 6:
+                ss << (m_byte_operands?"dh":"si");
+                break;
+            default:
+                ss << (m_byte_operands?"bh":"di");
+                break;
+        }
     }
-    return "";
+    return ss.str();
 }
 
 std::string OpCode::get_register8_name(uint8_t reg)

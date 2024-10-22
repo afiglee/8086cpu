@@ -40,7 +40,7 @@ namespace sim86 {
 #define MOV_IRB_MASK3   0xB0 //MOV Immediate data to Byte Register, 3 bit mask 0xF8
 #define RET             0xC3
 #define RETF            0xCB
-#define SHR
+#define ROT_MASK2       0xD0
 #define LJMP            0xEA
 #define CLI             0xFA
 
