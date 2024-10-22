@@ -77,33 +77,32 @@ std::ostream& operator<<(std::ostream& os, const OpCode &oCode)
             }
         }
         return os;
-        case XOR_DW_MASK:
-        {
-            os << "xor " << oCode.decode_dw_mod_rm();
-        }
-        return os;
-        case OR_DW_MASK:
-        {
-            os << "or " << oCode.decode_dw_mod_rm();
-        }
-        return os;        
-        case MOV_2R_MASK:
-        {
-            os << "mov " << oCode.decode_dw_mod_rm();
-        }
-        return os;
+        case XOR_DW_MASK: os << "xor " << oCode.decode_dw_mod_rm(); return os;
+        case OR_DW_MASK: os << "or " << oCode.decode_dw_mod_rm(); return os;        
+        case MOV_2R_MASK: os << "mov " << oCode.decode_dw_mod_rm(); return os;
+        case ADD_DW_MASK: os << "add " << oCode.decode_dw_mod_rm(); return os;
+        case ADC_DW_MASK: os << "adc " << oCode.decode_dw_mod_rm(); return os;
+        case SUB_DW_MASK: os << "sub " << oCode.decode_dw_mod_rm(); return os;
+        case SSB_DW_MASK: os << "ssb " << oCode.decode_dw_mod_rm(); return os;
+        case CMP_DW_MASK: os << "cmp " << oCode.decode_dw_mod_rm(); return os;
+        case AND_DW_MASK: os << "and " << oCode.decode_dw_mod_rm(); return os;
         default:
             break;
     }
     switch (code & 0xFE) {
         case OUT_MASK:
         {
-            os << "out " << oCode.m_operands[1] << ", " << oCode.decode_register_name();
+            os << "out " << oCode.m_operands[1] << ", " << (oCode.m_byte_operands?"al":"ax");
         }
         return os;
         case OUT_MASK_REG:
         {
             os << "out dx, " << (oCode.m_byte_operands?"al":"ax");
+        }
+        return os;
+        case INC_MASK:
+        {
+            os << "inc " << oCode.decode_mod_rm();
         }
         return os;
         default:
@@ -181,7 +180,11 @@ std::ostream& operator<<(std::ostream& os, const OpCode &oCode)
             print20(os, addr);
         }
         break;
-        
+        case JMP_SEG:
+        {
+            os << "jmp ";
+        }
+        break;
         default:
         {
             stringstream ss;
@@ -302,7 +305,7 @@ string OpCode::decode_mod_rm() const
 {
     uint8_t sw = m_operands[1] & 0xC0;
     stringstream ss;
-    ss << m_operands[0] << " " << m_operands[1] << " ";
+    //ss << m_operands[0] << " " << m_operands[1] << " ";
     if (sw != 0xC0) {
         ss << (m_byte_operands?"byte ptr [":"word ptr [");
         switch (m_operands[1] & 0x07) {

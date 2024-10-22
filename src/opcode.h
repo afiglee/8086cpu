@@ -131,7 +131,10 @@ namespace sim86 {
 #define MOV_2R_MASK 0x88
 
 #define OUT_MASK    0xE6
+#define JMP_SEG     0xE9
 #define OUT_MASK_REG 0xEE
+
+#define INC_MASK    0xFE
 
 class OpCode;
 typedef std::shared_ptr<OpCode>    pOpCode;
