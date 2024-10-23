@@ -1,6 +1,7 @@
 #ifndef _ROM_H__
 #define _ROM_H__
 
+#include <string.h>
 #include "basetypes.h"
 #include "opcode.h"
 
