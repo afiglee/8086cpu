@@ -264,9 +264,16 @@ public:
             return os << *this;
     }
     ssize_t calc_new_address(uint32_t d_start, size_t offset) const override {
-        uint16_t go_to = m_own_address + (int16_t) TO_UINT16(m_operands[1], m_operands[2]) + 3;
-        //go_to += offset;
-        return go_to;
+        switch (m_operands[0]) {
+            case 0xE8:
+            case 0xE9:
+            {
+                uint16_t go_to = m_own_address + (int16_t) TO_UINT16(m_operands[1], m_operands[2]) + 3;
+                //go_to += offset;
+                return go_to;
+            }
+        }
+        return offset;
     }
 
     friend std::ostream& operator<<(std::ostream& os, const AddressedOpCode &oCode);
